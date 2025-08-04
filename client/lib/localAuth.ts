@@ -1,0 +1,272 @@
+import { LoginRateLimit, validateEmail, sanitizeInput, validatePasswordStrength } from './security';
+
+export interface LocalUser {
+  id: string;
+  email: string;
+  passwordHash: string;
+  fullName: string;
+  createdAt: string;
+  lastLogin?: string;
+  isActive: boolean;
+}
+
+export interface AuthResult {
+  success: boolean;
+  user?: LocalUser;
+  error?: string;
+}
+
+// Função simples de hash de senha (em produção, use bcrypt ou similar)
+const hashPassword = (password: string, salt: string): string => {
+  // Simples hash combinando senha e salt
+  let hash = 0;
+  const str = password + salt + 'property-sales-secret';
+  
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  return Math.abs(hash).toString(36);
+};
+
+const generateSalt = (): string => {
+  return Math.random().toString(36).substring(2, 15);
+};
+
+// Usuários pré-cadastrados para demonstração
+const DEMO_USERS: LocalUser[] = [
+  {
+    id: 'user_1',
+    email: 'admin@vendas.com',
+    passwordHash: hashPassword('Admin123!', 'salt123'),
+    fullName: 'Administrador',
+    createdAt: new Date().toISOString(),
+    isActive: true
+  },
+  {
+    id: 'user_2', 
+    email: 'vendedor@vendas.com',
+    passwordHash: hashPassword('Vendas2024!', 'salt456'),
+    fullName: 'João Vendedor',
+    createdAt: new Date().toISOString(),
+    isActive: true
+  }
+];
+
+class LocalAuthService {
+  private static readonly USERS_KEY = 'local_auth_users';
+  private static readonly CURRENT_USER_KEY = 'current_user_session';
+
+  static initializeUsers(): void {
+    const existingUsers = this.getStoredUsers();
+    if (existingUsers.length === 0) {
+      localStorage.setItem(this.USERS_KEY, JSON.stringify(DEMO_USERS));
+    }
+  }
+
+  static getStoredUsers(): LocalUser[] {
+    const stored = localStorage.getItem(this.USERS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  }
+
+  static saveUsers(users: LocalUser[]): void {
+    localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
+  }
+
+  static async signIn(email: string, password: string): Promise<AuthResult> {
+    // Sanitizar inputs
+    const cleanEmail = sanitizeInput(email.toLowerCase());
+    const cleanPassword = sanitizeInput(password);
+
+    // Validar email
+    const emailValidation = validateEmail(cleanEmail);
+    if (!emailValidation.isValid) {
+      return { success: false, error: emailValidation.error };
+    }
+
+    // Verificar rate limiting
+    const rateLimitCheck = LoginRateLimit.checkRateLimit(cleanEmail);
+    if (!rateLimitCheck.allowed) {
+      if (rateLimitCheck.lockoutUntil) {
+        const remainingTime = Math.ceil((rateLimitCheck.lockoutUntil - Date.now()) / 60000);
+        return { 
+          success: false, 
+          error: `Muitas tentativas de login. Tente novamente em ${remainingTime} minutos.`
+        };
+      }
+      return { 
+        success: false, 
+        error: `Limite de tentativas excedido. ${rateLimitCheck.attemptsLeft} tentativas restantes.`
+      };
+    }
+
+    // Simular delay de autenticação (para evitar ataques de força bruta)
+    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+
+    this.initializeUsers();
+    const users = this.getStoredUsers();
+    const user = users.find(u => u.email === cleanEmail && u.isActive);
+
+    if (!user) {
+      LoginRateLimit.recordAttempt(cleanEmail, false);
+      return { success: false, error: 'Email ou senha incorretos' };
+    }
+
+    // Verificar senha (tentando ambos os salts para compatibilidade)
+    const isValidPassword = 
+      user.passwordHash === hashPassword(cleanPassword, 'salt123') ||
+      user.passwordHash === hashPassword(cleanPassword, 'salt456');
+
+    if (!isValidPassword) {
+      LoginRateLimit.recordAttempt(cleanEmail, false);
+      return { success: false, error: 'Email ou senha incorretos' };
+    }
+
+    // Login bem-sucedido
+    LoginRateLimit.recordAttempt(cleanEmail, true);
+    LoginRateLimit.clearAttempts(cleanEmail);
+
+    // Atualizar último login
+    const updatedUser = { ...user, lastLogin: new Date().toISOString() };
+    const updatedUsers = users.map(u => u.id === user.id ? updatedUser : u);
+    this.saveUsers(updatedUsers);
+
+    // Salvar sessão
+    localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(updatedUser));
+
+    return { success: true, user: updatedUser };
+  }
+
+  static async signUp(email: string, password: string, fullName: string): Promise<AuthResult> {
+    // Sanitizar inputs
+    const cleanEmail = sanitizeInput(email.toLowerCase());
+    const cleanPassword = sanitizeInput(password);
+    const cleanFullName = sanitizeInput(fullName);
+
+    // Validar email
+    const emailValidation = validateEmail(cleanEmail);
+    if (!emailValidation.isValid) {
+      return { success: false, error: emailValidation.error };
+    }
+
+    // Validar nome
+    if (!cleanFullName || cleanFullName.length < 2) {
+      return { success: false, error: 'Nome deve ter pelo menos 2 caracteres' };
+    }
+
+    // Validar força da senha
+    const passwordStrength = validatePasswordStrength(cleanPassword);
+    if (!passwordStrength.isStrong) {
+      return { success: false, error: 'Senha não atende aos requisitos de segurança' };
+    }
+
+    this.initializeUsers();
+    const users = this.getStoredUsers();
+
+    // Verificar se email já existe
+    if (users.some(u => u.email === cleanEmail)) {
+      return { success: false, error: 'Este email já está cadastrado' };
+    }
+
+    // Criar novo usuário
+    const salt = generateSalt();
+    const newUser: LocalUser = {
+      id: 'user_' + Date.now() + '_' + Math.random().toString(36).substring(2),
+      email: cleanEmail,
+      passwordHash: hashPassword(cleanPassword, salt),
+      fullName: cleanFullName,
+      createdAt: new Date().toISOString(),
+      isActive: true
+    };
+
+    // Salvar usuário
+    users.push(newUser);
+    this.saveUsers(users);
+
+    // Fazer login automático
+    localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(newUser));
+
+    return { success: true, user: newUser };
+  }
+
+  static getCurrentUser(): LocalUser | null {
+    const stored = localStorage.getItem(this.CURRENT_USER_KEY);
+    return stored ? JSON.parse(stored) : null;
+  }
+
+  static signOut(): void {
+    localStorage.removeItem(this.CURRENT_USER_KEY);
+  }
+
+  static isAuthenticated(): boolean {
+    return this.getCurrentUser() !== null;
+  }
+
+  // Método para listar credenciais válidas (apenas para demonstração)
+  static getValidCredentials(): { email: string; password: string; name: string }[] {
+    return [
+      { email: 'admin@vendas.com', password: 'Admin123!', name: 'Administrador' },
+      { email: 'vendedor@vendas.com', password: 'Vendas2024!', name: 'João Vendedor' }
+    ];
+  }
+
+  // Check if email exists in the system
+  static async checkEmailExists(email: string): Promise<boolean> {
+    const cleanEmail = sanitizeInput(email);
+
+    this.initializeUsers();
+    const users = this.getStoredUsers();
+    return users.some(user => user.email === cleanEmail && user.isActive);
+  }
+
+  // Reset password for a user
+  static async resetPassword(email: string, newPassword: string): Promise<AuthResult> {
+    try {
+      const cleanEmail = sanitizeInput(email);
+      const cleanPassword = sanitizeInput(newPassword);
+
+      // Validate email
+      const emailValidation = validateEmail(cleanEmail);
+      if (!emailValidation.isValid) {
+        return { success: false, error: emailValidation.error };
+      }
+
+      // Password strength validation
+      if (cleanPassword.length < 6) {
+        return { success: false, error: 'A senha deve ter pelo menos 6 caracteres' };
+      }
+
+      this.initializeUsers();
+      const users = this.getStoredUsers();
+      const userIndex = users.findIndex(u => u.email === cleanEmail && u.isActive);
+
+      if (userIndex === -1) {
+        return { success: false, error: 'Usuário não encontrado' };
+      }
+
+      // Update password
+      const salt = generateSalt();
+      const passwordHash = hashPassword(cleanPassword, salt);
+
+      users[userIndex].passwordHash = passwordHash;
+
+      // Save updated users
+      this.saveUsers(users);
+
+      // Clear any existing rate limiting for this user
+      LoginRateLimit.clearRateLimit(cleanEmail);
+
+      return {
+        success: true,
+        user: users[userIndex]
+      };
+    } catch (error) {
+      console.error('Reset password error:', error);
+      return { success: false, error: 'Erro interno do sistema' };
+    }
+  }
+}
+
+export default LocalAuthService;
