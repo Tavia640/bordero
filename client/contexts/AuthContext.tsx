@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
-import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { supabase, isSupabaseConfigured, isEmailConfigured } from '@/lib/supabase'
 import { SessionManager } from '@/lib/security'
 import LocalAuthService, { LocalUser } from '@/lib/localAuth'
 
@@ -9,9 +9,11 @@ interface AuthContextType {
   session: Session | null
   loading: boolean
   showSessionWarning: boolean
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: AuthError | string | null }>
+  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: AuthError | string | null, needsConfirmation?: boolean }>
   signIn: (email: string, password: string) => Promise<{ error: AuthError | string | null }>
   signOut: () => Promise<{ error: AuthError | null }>
+  sendPasswordResetEmail: (email: string) => Promise<{ error: AuthError | string | null }>
+  resendConfirmation: (email: string) => Promise<{ error: AuthError | string | null }>
   extendSession: () => void
 }
 
@@ -127,6 +129,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         email,
         password,
         options: {
+          emailRedirectTo: `${import.meta.env.VITE_APP_URL || window.location.origin}/dashboard`,
           data: {
             full_name: fullName,
           },
@@ -134,11 +137,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       })
 
       if (error) {
-        return { error }
+        // Handle specific Supabase errors
+        if (error.message.includes('already registered')) {
+          return { error: 'Este email já está cadastrado' }
+        }
+        if (error.message.includes('Invalid email')) {
+          return { error: 'Email inválido' }
+        }
+        if (error.message.includes('Password')) {
+          return { error: 'Senha muito fraca. Use pelo menos 6 caracteres' }
+        }
+        return { error: error.message }
       }
 
-      // Create profile record
-      if (data.user) {
+      // Check if user needs email confirmation
+      const needsConfirmation = data.user && !data.user.email_confirmed_at && !data.session
+
+      // Create profile record if user was created
+      if (data.user && data.session) {
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
@@ -148,15 +164,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
               full_name: fullName,
             },
           ])
+          .select()
 
         if (profileError) {
           console.error('Error creating profile:', profileError)
+          // Don't fail registration for profile error
         }
       }
 
-      return { error: null }
+      return {
+        error: null,
+        needsConfirmation: needsConfirmation
+      }
     } catch (error) {
-      return { error: error as AuthError }
+      console.error('SignUp error:', error)
+      return { error: 'Erro interno ao criar conta. Tente novamente.' }
     } finally {
       setLoading(false)
     }
@@ -183,9 +205,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
         password,
       })
 
-      return { error }
+      if (error) {
+        // Handle specific Supabase errors
+        if (error.message.includes('Invalid login credentials')) {
+          return { error: 'Email ou senha incorretos' }
+        }
+        if (error.message.includes('Email not confirmed')) {
+          return { error: 'Email não confirmado. Verifique sua caixa de entrada e clique no link de confirmação.' }
+        }
+        if (error.message.includes('Too many requests')) {
+          return { error: 'Muitas tentativas de login. Tente novamente em alguns minutos.' }
+        }
+        return { error: error.message }
+      }
+
+      return { error: null }
     } catch (error) {
-      return { error: error as AuthError }
+      console.error('SignIn error:', error)
+      return { error: 'Erro interno ao fazer login. Tente novamente.' }
     } finally {
       setLoading(false)
     }
@@ -213,6 +250,52 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
+  const sendPasswordResetEmail = async (email: string) => {
+    try {
+      if (!isSupabaseConfigured()) {
+        return { error: 'Sistema de email não configurado. Use a recuperação local.' }
+      }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${import.meta.env.VITE_APP_URL || window.location.origin}/reset-password`,
+      })
+
+      if (error) {
+        return { error: error.message }
+      }
+
+      return { error: null }
+    } catch (error) {
+      console.error('Password reset error:', error)
+      return { error: 'Erro ao enviar email de recuperação' }
+    }
+  }
+
+  const resendConfirmation = async (email: string) => {
+    try {
+      if (!isSupabaseConfigured()) {
+        return { error: 'Sistema de email não configurado' }
+      }
+
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: `${import.meta.env.VITE_APP_URL || window.location.origin}/dashboard`,
+        }
+      })
+
+      if (error) {
+        return { error: error.message }
+      }
+
+      return { error: null }
+    } catch (error) {
+      console.error('Resend confirmation error:', error)
+      return { error: 'Erro ao reenviar confirmação' }
+    }
+  }
+
   const value = {
     user,
     session,
@@ -221,6 +304,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signUp,
     signIn,
     signOut,
+    sendPasswordResetEmail,
+    resendConfirmation,
     extendSession,
   }
 
