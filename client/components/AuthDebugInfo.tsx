@@ -149,9 +149,53 @@ export function AuthDebugInfo() {
                   size="sm"
                   variant="outline"
                   onClick={async () => {
+                    // Direct test without validations
+                    const testEmail = 'luan.andrade@gavresorts.com.br';
+                    const testPassword = 'TesteSenha';
+
+                    console.log('🧪 Direct test without validation...');
+
+                    // Clear first
+                    LocalAuthService.clearAllAuthData();
+                    LocalAuthService.initializeUsers();
+
+                    // Create user directly
+                    const users = (LocalAuthService as any).getStoredUsers();
+                    const newUser = {
+                      id: 'user_test_' + Date.now(),
+                      email: testEmail.toLowerCase().trim(),
+                      passwordHash: 'test_hash',
+                      fullName: 'Luan Andrade',
+                      createdAt: new Date().toISOString(),
+                      isActive: true
+                    };
+
+                    users.push(newUser);
+                    localStorage.setItem('local_auth_users', JSON.stringify(users));
+
+                    // Verify save
+                    const savedUsers = (LocalAuthService as any).getStoredUsers();
+                    const wasSaved = savedUsers.some(u => u.email === testEmail.toLowerCase().trim());
+
+                    console.log('Direct save test:', { wasSaved, totalUsers: savedUsers.length });
+
+                    if (wasSaved) {
+                      alert('✅ Usuário salvo diretamente! Problema é na validação.');
+                    } else {
+                      alert('❌ Falha mesmo no salvamento direto');
+                    }
+                  }}
+                  className="text-xs bg-red-50 border-red-300 text-red-800 hover:bg-red-100"
+                >
+                  🧪 Teste Direto (Bypass)
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={async () => {
                     // Test the problematic email
                     const testEmail = 'luan.andrade@gavresorts.com.br';
-                    const testPassword = 'Teste123!';
+                    const testPassword = 'TesteSenha123';
 
                     console.log('🧪 Testing problematic email...');
 
@@ -180,9 +224,9 @@ export function AuthDebugInfo() {
                       alert('❌ Cadastro falhou: ' + signupResult.error);
                     }
                   }}
-                  className="text-xs bg-red-50 border-red-300 text-red-800 hover:bg-red-100"
+                  className="text-xs bg-orange-50 border-orange-300 text-orange-800 hover:bg-orange-100"
                 >
-                  🧪 Teste Email Problemático
+                  🧪 Teste Email Real
                 </Button>
                 <Button
                   size="sm"
