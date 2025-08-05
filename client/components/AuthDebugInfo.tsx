@@ -131,13 +131,11 @@ export function AuthDebugInfo() {
                   size="sm"
                   variant="outline"
                   onClick={async () => {
-                    // Quick test
+                    // Quick login test
                     LocalAuthService.forceReinitializeUsers();
-                    console.log('🧪 Testing admin login...');
                     const result = await LocalAuthService.signIn('admin@vendas.com', 'Admin123!');
-                    console.log('Result:', result);
                     if (result.success) {
-                      alert('✅ Login funcionando!');
+                      alert('✅ Login demo funcionando!');
                       LocalAuthService.signOut();
                     } else {
                       alert('❌ Login falhou: ' + result.error);
@@ -145,7 +143,42 @@ export function AuthDebugInfo() {
                   }}
                   className="text-xs bg-blue-50 border-blue-300 text-blue-800 hover:bg-blue-100"
                 >
-                  🧪 Teste Rápido Admin
+                  🧪 Teste Login Demo
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={async () => {
+                    // Test signup and login
+                    const testEmail = 'teste@exemplo.com';
+                    const testPassword = 'Teste123!';
+
+                    console.log('🧪 Testing signup and login...');
+
+                    // First signup
+                    const signupResult = await LocalAuthService.signUp(testEmail, testPassword, 'Usuário Teste');
+                    console.log('Signup result:', signupResult);
+
+                    if (signupResult.success) {
+                      LocalAuthService.signOut(); // Logout first
+
+                      // Then try to login
+                      const loginResult = await LocalAuthService.signIn(testEmail, testPassword);
+                      console.log('Login result:', loginResult);
+
+                      if (loginResult.success) {
+                        alert('✅ Cadastro e login funcionando!');
+                        LocalAuthService.signOut();
+                      } else {
+                        alert('❌ Cadastro OK, mas login falhou: ' + loginResult.error);
+                      }
+                    } else {
+                      alert('❌ Cadastro falhou: ' + signupResult.error);
+                    }
+                  }}
+                  className="text-xs bg-green-50 border-green-300 text-green-800 hover:bg-green-100"
+                >
+                  🧪 Teste Cadastro+Login
                 </Button>
                 <Button
                   size="sm"
