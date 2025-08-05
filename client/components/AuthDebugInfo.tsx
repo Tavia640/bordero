@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import LocalAuthService from "@/lib/localAuth";
 import { fixAuthSystem } from "@/utils/authFix";
+import { testAuthSystem } from "@/utils/testAuth";
 import { Info, Users, Database, Settings, Eye, EyeOff } from "lucide-react";
 
 export function AuthDebugInfo() {
@@ -118,6 +119,16 @@ export function AuthDebugInfo() {
             <div className="space-y-2 pt-3 border-t border-blue-200">
               <div className="text-xs font-semibold text-blue-800">🛠️ Debug Tools:</div>
               <div className="grid grid-cols-1 gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    testAuthSystem();
+                  }}
+                  className="text-xs bg-blue-50 border-blue-300 text-blue-800 hover:bg-blue-100"
+                >
+                  🧪 Testar Sistema de Auth
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
