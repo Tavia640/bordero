@@ -32,6 +32,7 @@ export default function Index() {
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
   const [showConfirmationMessage, setShowConfirmationMessage] = useState(false);
   const [confirmationEmail, setConfirmationEmail] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const { signIn, signUp, user, resendConfirmation } = useAuth();
   const navigate = useNavigate();
 
