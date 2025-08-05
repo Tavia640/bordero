@@ -19,6 +19,7 @@ import Vendas from "./pages/Vendas";
 import Recebimentos from "./pages/Recebimentos";
 import DiretorioVendas from "./pages/DiretorioVendas";
 import ResetPassword from "./pages/ResetPassword";
+import AuthTest from "./pages/AuthTest";
 import NotFound from "./pages/NotFound";
 import { SessionTimeoutWarning } from "./components/SessionTimeoutWarning";
 import { initializeProfessionalSystem } from "./utils/clearSystem";
@@ -36,6 +37,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/auth-test" element={<AuthTest />} />
             <Route
               path="/dashboard"
               element={
