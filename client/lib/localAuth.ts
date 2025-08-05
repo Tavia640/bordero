@@ -29,9 +29,7 @@ const hashPassword = (password: string, salt: string): string => {
     hash = hash & hash; // Convert to 32-bit integer
   }
 
-  const result = Math.abs(hash).toString(36);
-  Logger.log(`Hash calculation: "${password}" + "${salt}" = "${result}"`);
-  return result;
+  return Math.abs(hash).toString(36);
 };
 
 const generateSalt = (): string => {
