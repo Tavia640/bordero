@@ -230,6 +230,18 @@ export function AuthDebugInfo() {
                 >
                   🔧 Corrigir Sistema de Auth
                 </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const users = (LocalAuthService as any).getStoredUsers();
+                    console.log('👥 Current users:', users);
+                    alert(`Usuários salvos (${users.length}):\n${users.map(u => `- ${u.email}`).join('\n')}`);
+                  }}
+                  className="text-xs bg-yellow-50 border-yellow-300 text-yellow-800 hover:bg-yellow-100"
+                >
+                  👥 Ver Usuários Salvos
+                </Button>
                 <div className="flex gap-2">
                   <Button
                     size="sm"
