@@ -243,7 +243,17 @@ class LocalAuthService {
 
     // Salvar usuário
     users.push(newUser);
+    Logger.log('Saving new user:', { email: newUser.email, id: newUser.id });
     this.saveUsers(users);
+
+    // Verificar se foi salvo corretamente
+    const savedUsers = this.getStoredUsers();
+    const userWasSaved = savedUsers.some(u => u.email === cleanEmail);
+    Logger.log('User save verification:', {
+      email: cleanEmail,
+      wasSaved: userWasSaved,
+      totalUsers: savedUsers.length
+    });
 
     // Fazer login automático
     localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(newUser));
