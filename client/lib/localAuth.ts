@@ -63,8 +63,25 @@ class LocalAuthService {
   static initializeUsers(): void {
     const existingUsers = this.getStoredUsers();
     if (existingUsers.length === 0) {
+      Logger.log('Initializing demo users for the first time');
       localStorage.setItem(this.USERS_KEY, JSON.stringify(DEMO_USERS));
+    } else {
+      Logger.log('Users already initialized', { count: existingUsers.length });
     }
+  }
+
+  // Force reinitialize users (for debugging)
+  static forceReinitializeUsers(): void {
+    Logger.log('Force reinitializing demo users');
+    localStorage.setItem(this.USERS_KEY, JSON.stringify(DEMO_USERS));
+  }
+
+  // Clear all authentication data
+  static clearAllAuthData(): void {
+    Logger.log('Clearing all auth data');
+    localStorage.removeItem(this.USERS_KEY);
+    localStorage.removeItem(this.CURRENT_USER_KEY);
+    localStorage.removeItem('login_attempts');
   }
 
   static getStoredUsers(): LocalUser[] {
