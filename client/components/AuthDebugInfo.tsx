@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import LocalAuthService from "@/lib/localAuth";
+import { fixAuthSystem } from "@/utils/authFix";
 import { Info, Users, Database, Settings, Eye, EyeOff } from "lucide-react";
 
 export function AuthDebugInfo() {
@@ -116,29 +117,42 @@ export function AuthDebugInfo() {
 
             <div className="space-y-2 pt-3 border-t border-blue-200">
               <div className="text-xs font-semibold text-blue-800">🛠️ Debug Tools:</div>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    LocalAuthService.forceReinitializeUsers();
-                    window.location.reload();
+                    fixAuthSystem();
+                    setTimeout(() => window.location.reload(), 1000);
                   }}
-                  className="text-xs"
+                  className="text-xs bg-green-50 border-green-300 text-green-800 hover:bg-green-100"
                 >
-                  Reinicializar Usuários
+                  🔧 Corrigir Sistema de Auth
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    LocalAuthService.clearAllAuthData();
-                    window.location.reload();
-                  }}
-                  className="text-xs"
-                >
-                  Limpar Cache
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      LocalAuthService.forceReinitializeUsers();
+                      window.location.reload();
+                    }}
+                    className="text-xs flex-1"
+                  >
+                    Reinicializar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      LocalAuthService.clearAllAuthData();
+                      window.location.reload();
+                    }}
+                    className="text-xs flex-1"
+                  >
+                    Limpar Cache
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
