@@ -122,6 +122,14 @@ export function AuthDebugInfo() {
                 <Button
                   size="sm"
                   variant="outline"
+                  onClick={() => window.location.href = '/auth-test'}
+                  className="text-xs bg-purple-50 border-purple-300 text-purple-800 hover:bg-purple-100"
+                >
+                  🔬 Página de Teste Completa
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
                   onClick={() => {
                     testAuthSystem();
                   }}
