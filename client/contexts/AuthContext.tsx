@@ -3,6 +3,7 @@ import { User, Session, AuthError } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured, isEmailConfigured } from '@/lib/supabase'
 import { SessionManager } from '@/lib/security'
 import LocalAuthService, { LocalUser } from '@/lib/localAuth'
+import Logger from '@/lib/logger'
 
 interface AuthContextType {
   user: User | LocalUser | null
@@ -39,8 +40,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const initializeAuth = async () => {
+      Logger.log('Initializing authentication system');
+
       // Check if using Supabase or local auth
       if (isSupabaseConfigured()) {
+        Logger.log('Using Supabase authentication');
         // Get initial Supabase session
         supabase.auth.getSession().then(({ data: { session } }) => {
           setSession(session)
@@ -73,6 +77,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           stopSessionManagement()
         }
       } else {
+        Logger.log('Using local authentication fallback');
+
         // Use local authentication
         const localUser = LocalAuthService.getCurrentUser()
         setUser(localUser)
@@ -80,6 +86,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setLoading(false)
 
         if (localUser) {
+          Logger.authEvent('Local user session restored', { userId: localUser.id });
           startSessionManagement()
         }
       }
@@ -115,12 +122,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // If Supabase isn't configured, use local auth
       if (!isSupabaseConfigured()) {
+        Logger.log('Using local auth for signup', { email });
         const result = await LocalAuthService.signUp(email, password, fullName || 'Usuário');
         if (result.success && result.user) {
+          Logger.authEvent('Local signup successful', { userId: result.user.id, email });
           setUser(result.user)
           startSessionManagement()
           return { error: null }
         } else {
+          Logger.error('Local signup failed', result.error);
           return { error: result.error || 'Erro ao criar conta' }
         }
       }
@@ -190,15 +200,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // If Supabase isn't configured, use local auth
       if (!isSupabaseConfigured()) {
+        Logger.log('Using local auth for signin', { email });
         const result = await LocalAuthService.signIn(email, password);
         if (result.success && result.user) {
+          Logger.authEvent('Local signin successful', { userId: result.user.id, email });
           setUser(result.user)
           startSessionManagement()
           return { error: null }
         } else {
+          Logger.error('Local signin failed', result.error);
           return { error: result.error || 'Erro ao fazer login' }
         }
       }
+
+      Logger.log('Attempting Supabase signin', { email });
 
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -206,6 +221,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       })
 
       if (error) {
+        Logger.error('Supabase signin failed', { error: error.message, email });
+
         // Handle specific Supabase errors
         if (error.message.includes('Invalid login credentials')) {
           return { error: 'Email ou senha incorretos' }
@@ -219,6 +236,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { error: error.message }
       }
 
+      Logger.authEvent('Supabase signin successful', { email });
       return { error: null }
     } catch (error) {
       console.error('SignIn error:', error)
