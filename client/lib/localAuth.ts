@@ -228,8 +228,8 @@ class LocalAuthService {
       return { success: false, error: 'Este email já está cadastrado' };
     }
 
-    // Criar novo usuário
-    const salt = generateSalt();
+    // Criar novo usuário com salt baseado no email para consistência
+    const salt = 'salt_' + cleanEmail.replace(/[^a-zA-Z0-9]/g, '');
     const newUser: LocalUser = {
       id: 'user_' + Date.now() + '_' + Math.random().toString(36).substring(2),
       email: cleanEmail,
