@@ -38,25 +38,39 @@ const generateSalt = (): string => {
   return Math.random().toString(36).substring(2, 15);
 };
 
-// Usuários pré-cadastrados para demonstração
-const DEMO_USERS: LocalUser[] = [
-  {
-    id: 'user_1',
-    email: 'admin@vendas.com',
-    passwordHash: hashPassword('Admin123!', 'salt123'),
-    fullName: 'Administrador',
-    createdAt: new Date().toISOString(),
-    isActive: true
-  },
-  {
-    id: 'user_2', 
-    email: 'vendedor@vendas.com',
-    passwordHash: hashPassword('Vendas2024!', 'salt456'),
-    fullName: 'João Vendedor',
-    createdAt: new Date().toISOString(),
-    isActive: true
-  }
-];
+// Função para criar usuários demo com hashes corretos
+const createDemoUsers = (): LocalUser[] => {
+  const users = [
+    {
+      id: 'user_1',
+      email: 'admin@vendas.com',
+      password: 'Admin123!',
+      salt: 'salt123',
+      fullName: 'Administrador'
+    },
+    {
+      id: 'user_2',
+      email: 'vendedor@vendas.com',
+      password: 'Vendas2024!',
+      salt: 'salt456',
+      fullName: 'João Vendedor'
+    }
+  ];
+
+  return users.map(user => {
+    const passwordHash = hashPassword(user.password, user.salt);
+    Logger.log(`Creating demo user: ${user.email} with hash: ${passwordHash}`);
+
+    return {
+      id: user.id,
+      email: user.email,
+      passwordHash,
+      fullName: user.fullName,
+      createdAt: new Date().toISOString(),
+      isActive: true
+    };
+  });
+};
 
 class LocalAuthService {
   private static readonly USERS_KEY = 'local_auth_users';
