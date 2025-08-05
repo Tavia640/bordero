@@ -1,4 +1,4 @@
-import { LoginRateLimit, validateEmail, sanitizeInput, validatePasswordStrength } from './security';
+import { LoginRateLimit, validateEmail, sanitizeInput, sanitizePassword, validatePasswordStrength } from './security';
 import Logger from './logger';
 
 export interface LocalUser {
@@ -148,7 +148,7 @@ class LocalAuthService {
   static async signUp(email: string, password: string, fullName: string): Promise<AuthResult> {
     // Sanitizar inputs
     const cleanEmail = sanitizeInput(email.toLowerCase());
-    const cleanPassword = sanitizeInput(password);
+    const cleanPassword = sanitizePassword(password);
     const cleanFullName = sanitizeInput(fullName);
 
     // Validar email
@@ -231,7 +231,7 @@ class LocalAuthService {
   static async resetPassword(email: string, newPassword: string): Promise<AuthResult> {
     try {
       const cleanEmail = sanitizeInput(email);
-      const cleanPassword = sanitizeInput(newPassword);
+      const cleanPassword = sanitizePassword(newPassword);
 
       // Validate email
       const emailValidation = validateEmail(cleanEmail);
