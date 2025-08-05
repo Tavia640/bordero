@@ -142,14 +142,17 @@ export default function Index() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md mx-auto space-y-6">
         <Card className="bg-white shadow-sm border border-gray-200 rounded-lg">
-          <CardHeader className="text-center space-y-2 pb-6">
+          <CardHeader className="text-center space-y-4 pb-6">
+            <div className="flex justify-center">
+              <img src="/logo.webp" alt="Borderor" className="w-16 h-16" />
+            </div>
             <CardTitle className="text-2xl font-semibold text-green-600">
-              Gestão de Multipropriedade
+              Borderor
             </CardTitle>
             <CardDescription className="text-gray-600 text-sm leading-relaxed">
-              Sistema de controle de vendas e recebimentos
+              Sistema completo de gestão financeira
               <br />
-              para consultores de multipropriedade
+              para seu negócio
             </CardDescription>
           </CardHeader>
 
