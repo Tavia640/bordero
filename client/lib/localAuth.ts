@@ -159,11 +159,7 @@ class LocalAuthService {
     });
 
     if (!user) {
-      Logger.error('User not found', {
-        searchEmail: cleanEmail,
-        availableEmails: JSON.stringify(users.map(u => u.email)),
-        usersData: JSON.stringify(users.map(u => ({ email: u.email, isActive: u.isActive })))
-      });
+      Logger.error('User not found', `Email: ${cleanEmail}, Available: ${users.map(u => u.email).join(', ')}`);
       LoginRateLimit.recordAttempt(cleanEmail, false);
       return { success: false, error: 'Email ou senha incorretos' };
     }
