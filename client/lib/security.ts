@@ -344,3 +344,11 @@ export const sanitizeInput = (input: string): string => {
     .replace(/[<>\"'&]/g, '') // Remove dangerous characters
     .slice(0, 255); // Limit length
 };
+
+// Password sanitization (preserves special characters needed for strong passwords)
+export const sanitizePassword = (password: string): string => {
+  return password
+    .trim()
+    .replace(/[<>\"']/g, '') // Remove only the most dangerous characters
+    .slice(0, 128); // Reasonable password length limit
+};
