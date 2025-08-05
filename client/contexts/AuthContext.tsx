@@ -2,11 +2,11 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured, isEmailConfigured } from '@/lib/supabase'
 import { SessionManager } from '@/lib/security'
-import LocalAuthService, { LocalUser } from '@/lib/localAuth'
+import SimpleAuthService, { SimpleUser } from '@/lib/simpleAuth'
 import Logger from '@/lib/logger'
 
 interface AuthContextType {
-  user: User | LocalUser | null
+  user: User | SimpleUser | null
   session: Session | null
   loading: boolean
   showSessionWarning: boolean
@@ -77,16 +77,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
           stopSessionManagement()
         }
       } else {
-        Logger.log('Using local authentication fallback');
+        Logger.log('Using simple authentication system');
 
-        // Use local authentication
-        const localUser = LocalAuthService.getCurrentUser()
-        setUser(localUser)
+        // Initialize simple auth system
+        SimpleAuthService.initialize();
+
+        // Check for existing user session
+        const simpleUser = SimpleAuthService.getCurrentUser()
+        setUser(simpleUser)
         setSession(null)
         setLoading(false)
 
-        if (localUser) {
-          Logger.authEvent('Local user session restored', { userId: localUser.id });
+        if (simpleUser) {
+          Logger.authEvent('Simple user session restored', { userId: simpleUser.id });
           startSessionManagement()
         }
       }
@@ -120,17 +123,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setLoading(true)
 
-      // If Supabase isn't configured, use local auth
+      // If Supabase isn't configured, use simple auth
       if (!isSupabaseConfigured()) {
-        Logger.log('Using local auth for signup', { email });
-        const result = await LocalAuthService.signUp(email, password, fullName || 'Usuário');
+        Logger.log('Using simple auth for signup', { email });
+        const result = await SimpleAuthService.signUp(email, password, fullName || 'Usuário');
         if (result.success && result.user) {
-          Logger.authEvent('Local signup successful', { userId: result.user.id, email });
+          Logger.authEvent('Simple signup successful', { userId: result.user.id, email });
           setUser(result.user)
           startSessionManagement()
           return { error: null }
         } else {
-          Logger.error('Local signup failed', result.error);
+          Logger.error('Simple signup failed', result.error);
           return { error: result.error || 'Erro ao criar conta' }
         }
       }
@@ -198,17 +201,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setLoading(true)
 
-      // If Supabase isn't configured, use local auth
+      // If Supabase isn't configured, use simple auth
       if (!isSupabaseConfigured()) {
-        Logger.log('Using local auth for signin', { email });
-        const result = await LocalAuthService.signIn(email, password);
+        Logger.log('Using simple auth for signin', { email });
+        const result = await SimpleAuthService.signIn(email, password);
         if (result.success && result.user) {
-          Logger.authEvent('Local signin successful', { userId: result.user.id, email });
+          Logger.authEvent('Simple signin successful', { userId: result.user.id, email });
           setUser(result.user)
           startSessionManagement()
           return { error: null }
         } else {
-          Logger.error('Local signin failed', result.error);
+          Logger.error('Simple signin failed', result.error);
           return { error: result.error || 'Erro ao fazer login' }
         }
       }
@@ -250,9 +253,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setLoading(true)
 
-      // If Supabase isn't configured, use local auth
+      // If Supabase isn't configured, use simple auth
       if (!isSupabaseConfigured()) {
-        LocalAuthService.signOut()
+        SimpleAuthService.signOut()
         setUser(null)
         setSession(null)
         stopSessionManagement()
