@@ -113,6 +113,34 @@ export function AuthDebugInfo() {
                 3. Ative o sistema de emails no Supabase
               </div>
             )}
+
+            <div className="space-y-2 pt-3 border-t border-blue-200">
+              <div className="text-xs font-semibold text-blue-800">🛠️ Debug Tools:</div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    LocalAuthService.forceReinitializeUsers();
+                    window.location.reload();
+                  }}
+                  className="text-xs"
+                >
+                  Reinicializar Usuários
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    LocalAuthService.clearAllAuthData();
+                    window.location.reload();
+                  }}
+                  className="text-xs"
+                >
+                  Limpar Cache
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
