@@ -200,14 +200,27 @@ class LocalAuthService {
   }
 
   static async signUp(email: string, password: string, fullName: string): Promise<AuthResult> {
+    Logger.log('Starting signup process', {
+      originalEmail: email,
+      originalPassword: password,
+      originalFullName: fullName
+    });
+
     // Sanitizar inputs
     const cleanEmail = sanitizeInput(email.toLowerCase());
     const cleanPassword = sanitizePassword(password);
     const cleanFullName = sanitizeInput(fullName);
 
+    Logger.log('After sanitization', {
+      cleanEmail,
+      cleanPassword,
+      cleanFullName
+    });
+
     // Validar email
     const emailValidation = validateEmail(cleanEmail);
     if (!emailValidation.isValid) {
+      Logger.error('Email validation failed:', emailValidation.error);
       return { success: false, error: emailValidation.error };
     }
 
