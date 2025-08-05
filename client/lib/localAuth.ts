@@ -141,22 +141,32 @@ class LocalAuthService {
       return { success: false, error: 'Email ou senha incorretos' };
     }
 
-    // Verificar senha (tentando ambos os salts para compatibilidade)
+    // Verificar senha (tentando diferentes abordagens para compatibilidade)
     const hash1 = hashPassword(cleanPassword, 'salt123');
     const hash2 = hashPassword(cleanPassword, 'salt456');
+    // También probar con la contraseña sin sanitizar
+    const originalHash1 = hashPassword(password, 'salt123');
+    const originalHash2 = hashPassword(password, 'salt456');
 
     Logger.log('Password verification:', {
+      originalPassword: password,
       cleanPassword,
       storedHash: user.passwordHash,
       calculatedHash1: hash1,
       calculatedHash2: hash2,
+      originalHash1,
+      originalHash2,
       match1: user.passwordHash === hash1,
-      match2: user.passwordHash === hash2
+      match2: user.passwordHash === hash2,
+      originalMatch1: user.passwordHash === originalHash1,
+      originalMatch2: user.passwordHash === originalHash2
     });
 
     const isValidPassword =
       user.passwordHash === hash1 ||
-      user.passwordHash === hash2;
+      user.passwordHash === hash2 ||
+      user.passwordHash === originalHash1 ||
+      user.passwordHash === originalHash2;
 
     if (!isValidPassword) {
       Logger.error('Password verification failed', { cleanEmail });
