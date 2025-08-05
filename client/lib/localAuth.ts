@@ -81,7 +81,7 @@ class LocalAuthService {
 
     // Sanitizar inputs
     const cleanEmail = sanitizeInput(email.toLowerCase());
-    const cleanPassword = sanitizeInput(password);
+    const cleanPassword = sanitizePassword(password);
 
     // Validar email
     const emailValidation = validateEmail(cleanEmail);
