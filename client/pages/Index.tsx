@@ -15,6 +15,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import PasswordRecoveryModal from "@/components/PasswordRecoveryModal";
+import { AuthDebugInfo } from "@/components/AuthDebugInfo";
 import LocalAuthService from "@/lib/localAuth";
 import { LoginRateLimit, validateEmail } from "@/lib/security";
 import { Info, Shield, Eye, EyeOff, Mail, CheckCircle } from "lucide-react";
@@ -457,6 +458,8 @@ export default function Index() {
                 )}
               </TabsContent>
             </Tabs>
+
+            <AuthDebugInfo />
           </CardContent>
         </Card>
       </div>
