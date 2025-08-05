@@ -113,19 +113,36 @@ class LocalAuthService {
 
     this.initializeUsers();
     const users = this.getStoredUsers();
+    Logger.log('Available users:', users.map(u => ({ email: u.email, id: u.id })));
+
     const user = users.find(u => u.email === cleanEmail && u.isActive);
+    Logger.log('User lookup result:', { cleanEmail, foundUser: !!user });
 
     if (!user) {
+      Logger.error('User not found', { cleanEmail, availableEmails: users.map(u => u.email) });
       LoginRateLimit.recordAttempt(cleanEmail, false);
       return { success: false, error: 'Email ou senha incorretos' };
     }
 
     // Verificar senha (tentando ambos os salts para compatibilidade)
-    const isValidPassword = 
-      user.passwordHash === hashPassword(cleanPassword, 'salt123') ||
-      user.passwordHash === hashPassword(cleanPassword, 'salt456');
+    const hash1 = hashPassword(cleanPassword, 'salt123');
+    const hash2 = hashPassword(cleanPassword, 'salt456');
+
+    Logger.log('Password verification:', {
+      cleanPassword,
+      storedHash: user.passwordHash,
+      calculatedHash1: hash1,
+      calculatedHash2: hash2,
+      match1: user.passwordHash === hash1,
+      match2: user.passwordHash === hash2
+    });
+
+    const isValidPassword =
+      user.passwordHash === hash1 ||
+      user.passwordHash === hash2;
 
     if (!isValidPassword) {
+      Logger.error('Password verification failed', { cleanEmail });
       LoginRateLimit.recordAttempt(cleanEmail, false);
       return { success: false, error: 'Email ou senha incorretos' };
     }
