@@ -149,6 +149,45 @@ export function AuthDebugInfo() {
                   size="sm"
                   variant="outline"
                   onClick={async () => {
+                    // Test the problematic email
+                    const testEmail = 'luan.andrade@gavresorts.com.br';
+                    const testPassword = 'Teste123!';
+
+                    console.log('🧪 Testing problematic email...');
+
+                    // Clear and reinitialize first
+                    LocalAuthService.clearAllAuthData();
+                    LocalAuthService.initializeUsers();
+
+                    // Test signup
+                    const signupResult = await LocalAuthService.signUp(testEmail, testPassword, 'Luan Andrade');
+                    console.log('Signup result:', signupResult);
+
+                    if (signupResult.success) {
+                      LocalAuthService.signOut();
+
+                      // Test login
+                      const loginResult = await LocalAuthService.signIn(testEmail, testPassword);
+                      console.log('Login result:', loginResult);
+
+                      if (loginResult.success) {
+                        alert('✅ Email problemático funcionando!');
+                        LocalAuthService.signOut();
+                      } else {
+                        alert('❌ Login falhou: ' + loginResult.error);
+                      }
+                    } else {
+                      alert('❌ Cadastro falhou: ' + signupResult.error);
+                    }
+                  }}
+                  className="text-xs bg-red-50 border-red-300 text-red-800 hover:bg-red-100"
+                >
+                  🧪 Teste Email Problemático
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={async () => {
                     // Test signup and login
                     const testEmail = 'teste@exemplo.com';
                     const testPassword = 'Teste123!';
