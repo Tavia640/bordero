@@ -218,8 +218,15 @@ class LocalAuthService {
 
     // Validar força da senha
     const passwordStrength = validatePasswordStrength(cleanPassword);
+    Logger.log('Password strength validation:', {
+      password: cleanPassword,
+      strength: passwordStrength,
+      isStrong: passwordStrength.isStrong
+    });
+
     if (!passwordStrength.isStrong) {
-      return { success: false, error: 'Senha não atende aos requisitos de segurança' };
+      Logger.error('Password validation failed:', passwordStrength.feedback.join(', '));
+      return { success: false, error: `Senha não atende aos requisitos: ${passwordStrength.feedback.join(', ')}` };
     }
 
     this.initializeUsers();
