@@ -133,10 +133,19 @@ class LocalAuthService {
     Logger.log('Available users:', users.map(u => ({ email: u.email, id: u.id })));
 
     const user = users.find(u => u.email === cleanEmail && u.isActive);
-    Logger.log('User lookup result:', { cleanEmail, foundUser: !!user });
+
+    Logger.log('User lookup result:', {
+      searchEmail: cleanEmail,
+      foundUser: !!user,
+      totalUsers: users.length
+    });
 
     if (!user) {
-      Logger.error('User not found', { cleanEmail, availableEmails: users.map(u => u.email) });
+      Logger.error('User not found', {
+        searchEmail: cleanEmail,
+        availableEmails: JSON.stringify(users.map(u => u.email)),
+        usersData: JSON.stringify(users.map(u => ({ email: u.email, isActive: u.isActive })))
+      });
       LoginRateLimit.recordAttempt(cleanEmail, false);
       return { success: false, error: 'Email ou senha incorretos' };
     }
