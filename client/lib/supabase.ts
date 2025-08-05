@@ -1,15 +1,35 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key'
 
-// Create client with placeholder values if env vars are missing
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
 // Helper to check if Supabase is properly configured
 export const isSupabaseConfigured = () => {
   return supabaseUrl !== 'https://placeholder.supabase.co' &&
-         supabaseAnonKey !== 'placeholder-anon-key'
+         supabaseAnonKey !== 'placeholder-anon-key' &&
+         supabaseUrl.includes('supabase.co') &&
+         supabaseAnonKey.length > 20
+}
+
+// Create client with proper configuration for email confirmation
+export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    // Email confirmation settings
+    flowType: 'pkce',
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'borderor-app'
+    }
+  }
+})
+
+// Email configuration check
+export const isEmailConfigured = () => {
+  return isSupabaseConfigured() && import.meta.env.VITE_APP_URL
 }
 
 // Database types

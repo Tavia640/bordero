@@ -1,4 +1,5 @@
 import { LoginRateLimit, validateEmail, sanitizeInput, validatePasswordStrength } from './security';
+import Logger from './logger';
 
 export interface LocalUser {
   id: string;
@@ -76,6 +77,8 @@ class LocalAuthService {
   }
 
   static async signIn(email: string, password: string): Promise<AuthResult> {
+    Logger.log('Local signin attempt', { email });
+
     // Sanitizar inputs
     const cleanEmail = sanitizeInput(email.toLowerCase());
     const cleanPassword = sanitizeInput(password);
@@ -83,21 +86,24 @@ class LocalAuthService {
     // Validar email
     const emailValidation = validateEmail(cleanEmail);
     if (!emailValidation.isValid) {
+      Logger.validationError('email', cleanEmail, emailValidation.error || 'Invalid email');
       return { success: false, error: emailValidation.error };
     }
 
     // Verificar rate limiting
     const rateLimitCheck = LoginRateLimit.checkRateLimit(cleanEmail);
+    Logger.rateLimitEvent(cleanEmail, rateLimitCheck.allowed, rateLimitCheck.attemptsLeft);
+
     if (!rateLimitCheck.allowed) {
       if (rateLimitCheck.lockoutUntil) {
         const remainingTime = Math.ceil((rateLimitCheck.lockoutUntil - Date.now()) / 60000);
-        return { 
-          success: false, 
+        return {
+          success: false,
           error: `Muitas tentativas de login. Tente novamente em ${remainingTime} minutos.`
         };
       }
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: `Limite de tentativas excedido. ${rateLimitCheck.attemptsLeft} tentativas restantes.`
       };
     }

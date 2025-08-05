@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { X, Mail, Key, CheckCircle, AlertTriangle } from "lucide-react";
 import LocalAuthService from "@/lib/localAuth";
+import { useAuth } from "@/contexts/AuthContext";
+import { isSupabaseConfigured } from "@/lib/supabase";
 
 interface PasswordRecoveryModalProps {
   isOpen: boolean;
@@ -25,8 +27,11 @@ export default function PasswordRecoveryModal({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [useSupabase, setUseSupabase] = useState(isSupabaseConfigured());
 
-  // Simulação do código de verificação (em produção seria enviado por email)
+  const { sendPasswordResetEmail } = useAuth();
+
+  // Simulação do código de verificação (para auth local)
   const [generatedCode] = useState(() =>
     Math.floor(100000 + Math.random() * 900000).toString(),
   );
@@ -37,20 +42,35 @@ export default function PasswordRecoveryModal({
     setLoading(true);
 
     try {
-      // Verificar se o email existe no sistema
-      const emailExists = await LocalAuthService.checkEmailExists(email);
+      if (useSupabase) {
+        // Use Supabase password reset
+        const { error } = await sendPasswordResetEmail(email);
 
-      if (!emailExists) {
-        setError("Email não encontrado no sistema");
+        if (error) {
+          setError(error);
+          setLoading(false);
+          return;
+        }
+
+        // Success - show success message directly
         setLoading(false);
-        return;
+        setStep("success");
+      } else {
+        // Use local auth verification flow
+        const emailExists = await LocalAuthService.checkEmailExists(email);
+
+        if (!emailExists) {
+          setError("Email não encontrado no sistema");
+          setLoading(false);
+          return;
+        }
+
+        // Simulate email sending for local auth
+        setTimeout(() => {
+          setLoading(false);
+          setStep("verify");
+        }, 1500);
       }
-
-      // Simular envio de email (em produção enviaria um email real)
-      setTimeout(() => {
-        setLoading(false);
-        setStep("verify");
-      }, 1500);
     } catch (error) {
       setError("Erro ao verificar email. Tente novamente.");
       setLoading(false);
@@ -155,8 +175,10 @@ export default function PasswordRecoveryModal({
               <div className="text-center mb-4">
                 <Mail className="h-12 w-12 text-green-600 mx-auto mb-2" />
                 <p className="text-sm text-gray-600">
-                  Digite seu email corporativo para receber o código de
-                  verificação
+                  {useSupabase
+                    ? "Digite seu email para receber o link de recuperação"
+                    : "Digite seu email para receber o código de verificação"
+                  }
                 </p>
               </div>
 
@@ -178,8 +200,14 @@ export default function PasswordRecoveryModal({
                 className="w-full bg-green-600 hover:bg-green-700"
                 disabled={loading}
               >
-                {loading ? "Enviando..." : "Enviar Código"}
+                {loading ? "Enviando..." : (useSupabase ? "Enviar Link" : "Enviar Código")}
               </Button>
+
+              {!useSupabase && (
+                <p className="text-xs text-gray-500 text-center mt-2">
+                  💡 Código de demonstração: {generatedCode}
+                </p>
+              )}
             </form>
           )}
 
@@ -297,11 +325,13 @@ export default function PasswordRecoveryModal({
               <CheckCircle className="h-16 w-16 text-green-600 mx-auto" />
               <div>
                 <h3 className="text-lg font-semibold text-green-800 mb-2">
-                  Senha Redefinida!
+                  {useSupabase ? "Email Enviado!" : "Senha Redefinida!"}
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Sua senha foi alterada com sucesso. Você já pode fazer login
-                  com a nova senha.
+                  {useSupabase
+                    ? `Enviamos um link de recuperação para ${email}. Clique no link para redefinir sua senha.`
+                    : "Sua senha foi alterada com sucesso. Você já pode fazer login com a nova senha."
+                  }
                 </p>
               </div>
 
@@ -309,7 +339,7 @@ export default function PasswordRecoveryModal({
                 onClick={handleClose}
                 className="w-full bg-green-600 hover:bg-green-700"
               >
-                Fazer Login
+                {useSupabase ? "Entendi" : "Fazer Login"}
               </Button>
             </div>
           )}

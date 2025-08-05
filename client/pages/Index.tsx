@@ -15,9 +15,10 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import PasswordRecoveryModal from "@/components/PasswordRecoveryModal";
+import { AuthDebugInfo } from "@/components/AuthDebugInfo";
 import LocalAuthService from "@/lib/localAuth";
 import { LoginRateLimit, validateEmail } from "@/lib/security";
-import { Info, Shield, Eye, EyeOff } from "lucide-react";
+import { Info, Shield, Eye, EyeOff, Mail, CheckCircle } from "lucide-react";
 
 export default function Index() {
   const [email, setEmail] = useState("");
@@ -30,7 +31,10 @@ export default function Index() {
   const [showPasswordStrength, setShowPasswordStrength] = useState(false);
   const [rateLimitInfo, setRateLimitInfo] = useState<any>(null);
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const [showConfirmationMessage, setShowConfirmationMessage] = useState(false);
+  const [confirmationEmail, setConfirmationEmail] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const { signIn, signUp, user, resendConfirmation } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already authenticated
@@ -120,16 +124,15 @@ export default function Index() {
 
     setLoading(true);
 
-    const { error } = await signUp(email, password, fullName);
+    const { error, needsConfirmation } = await signUp(email, password, fullName);
 
     if (error) {
-      const errorMessage =
-        typeof error === "string"
-          ? error
-          : error.message?.includes("already registered")
-            ? "Este email já está cadastrado"
-            : "Erro ao criar conta. Tente novamente.";
+      const errorMessage = typeof error === "string" ? error : "Erro ao criar conta. Tente novamente.";
       setError(errorMessage);
+    } else if (needsConfirmation) {
+      setConfirmationEmail(email);
+      setShowConfirmationMessage(true);
+      setError("");
     } else {
       setError("");
       navigate("/dashboard");
@@ -278,6 +281,52 @@ export default function Index() {
                     </AlertDescription>
                   </Alert>
                 )}
+                {showConfirmationMessage ? (
+                  <div className="text-center space-y-4">
+                    <Mail className="h-16 w-16 text-green-600 mx-auto" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-green-800 mb-2">
+                        Confirme seu Email
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Enviamos um link de confirmação para
+                        <br />
+                        <span className="font-semibold text-green-600">{confirmationEmail}</span>
+                        <br />
+                        Clique no link para ativar sua conta.
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Button
+                        onClick={async () => {
+                          const { error } = await resendConfirmation(confirmationEmail);
+                          if (error) {
+                            setError(error);
+                          } else {
+                            setError('');
+                            alert('Email de confirmação reenviado!');
+                          }
+                        }}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        Reenviar Email
+                      </Button>
+
+                      <Button
+                        onClick={() => {
+                          setShowConfirmationMessage(false);
+                          setConfirmationEmail('');
+                        }}
+                        variant="ghost"
+                        className="w-full"
+                      >
+                        Voltar ao Login
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
                 <form onSubmit={handleCreateAccount} className="space-y-4">
                   <div className="space-y-2">
                     <Label
@@ -406,8 +455,11 @@ export default function Index() {
                     {loading ? "Criando Conta..." : "Criar Conta"}
                   </Button>
                 </form>
+                )}
               </TabsContent>
             </Tabs>
+
+            <AuthDebugInfo />
           </CardContent>
         </Card>
       </div>
