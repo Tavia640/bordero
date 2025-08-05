@@ -268,6 +268,21 @@ class LocalAuthService {
       totalUsers: savedUsers.length
     });
 
+    // Se não foi salvo, tentar novamente
+    if (!userWasSaved) {
+      Logger.error('User was not saved, retrying...');
+      const retryUsers = this.getStoredUsers();
+      retryUsers.push(newUser);
+      localStorage.setItem(this.USERS_KEY, JSON.stringify(retryUsers));
+
+      // Verificar novamente
+      const finalCheck = this.getStoredUsers();
+      const finalSaved = finalCheck.some(u => u.email === cleanEmail);
+      if (!finalSaved) {
+        return { success: false, error: 'Erro ao salvar usuário no sistema' };
+      }
+    }
+
     // Fazer login automático
     localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(newUser));
 
