@@ -17,7 +17,7 @@ import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicato
 import PasswordRecoveryModal from "@/components/PasswordRecoveryModal";
 import LocalAuthService from "@/lib/localAuth";
 import { LoginRateLimit, validateEmail } from "@/lib/security";
-import { Info, Shield, Eye, EyeOff } from "lucide-react";
+import { Info, Shield, Eye, EyeOff, Mail, CheckCircle } from "lucide-react";
 
 export default function Index() {
   const [email, setEmail] = useState("");
