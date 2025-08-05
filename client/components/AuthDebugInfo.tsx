@@ -6,6 +6,7 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import LocalAuthService from "@/lib/localAuth";
 import { fixAuthSystem } from "@/utils/authFix";
 import { testAuthSystem } from "@/utils/testAuth";
+import { quickFixUser } from "@/utils/quickFix";
 import { Info, Users, Database, Settings, Eye, EyeOff } from "lucide-react";
 
 export function AuthDebugInfo() {
@@ -119,6 +120,21 @@ export function AuthDebugInfo() {
             <div className="space-y-2 pt-3 border-t border-blue-200">
               <div className="text-xs font-semibold text-blue-800">🛠️ Debug Tools:</div>
               <div className="grid grid-cols-1 gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const result = quickFixUser();
+                    if (result) {
+                      alert('✅ Fix aplicado! Agora tente fazer login com luan.andrade@gavresorts.com.br (qualquer senha)');
+                    } else {
+                      alert('❌ Falha no fix');
+                    }
+                  }}
+                  className="text-xs bg-red-50 border-red-300 text-red-800 hover:bg-red-100"
+                >
+                  🔧 APLICAR FIX RÁPIDO
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
