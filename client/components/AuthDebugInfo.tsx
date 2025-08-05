@@ -3,10 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import LocalAuthService from "@/lib/localAuth";
-import { fixAuthSystem } from "@/utils/authFix";
-import { testAuthSystem } from "@/utils/testAuth";
-import { quickFixUser } from "@/utils/quickFix";
+import SimpleAuthService from "@/lib/simpleAuth";
 import { Info, Users, Database, Settings, Eye, EyeOff } from "lucide-react";
 
 export function AuthDebugInfo() {
@@ -18,7 +15,7 @@ export function AuthDebugInfo() {
   }
 
   const isSupabaseEnabled = isSupabaseConfigured();
-  const validCredentials = LocalAuthService.getValidCredentials();
+  const validCredentials = SimpleAuthService.listCredentials();
 
   return (
     <div className="mt-6">
