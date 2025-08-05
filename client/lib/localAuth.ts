@@ -22,14 +22,16 @@ const hashPassword = (password: string, salt: string): string => {
   // Simples hash combinando senha e salt
   let hash = 0;
   const str = password + salt + 'property-sales-secret';
-  
+
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
-  
-  return Math.abs(hash).toString(36);
+
+  const result = Math.abs(hash).toString(36);
+  Logger.log(`Hash calculation: "${password}" + "${salt}" = "${result}"`);
+  return result;
 };
 
 const generateSalt = (): string => {
