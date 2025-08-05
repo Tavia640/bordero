@@ -146,13 +146,33 @@ class LocalAuthService {
       return { success: false, error: 'Email ou senha incorretos' };
     }
 
-    // Verificação simplificada de senha
+    // Verificação de senha para usuários demo e criados dinamicamente
     Logger.log('Password verification for:', user.email);
 
-    const isValidPassword = (
-      (user.email === 'admin@vendas.com' && password === 'Admin123!') ||
-      (user.email === 'vendedor@vendas.com' && password === 'Vendas2024!')
-    );
+    let isValidPassword = false;
+
+    // Verificar usuários demo primeiro
+    if (user.email === 'admin@vendas.com' && password === 'Admin123!') {
+      isValidPassword = true;
+    } else if (user.email === 'vendedor@vendas.com' && password === 'Vendas2024!') {
+      isValidPassword = true;
+    } else {
+      // Para usuários criados dinamicamente, precisamos verificar o hash
+      // Como não temos o salt armazenado, vamos tentar diferentes abordagens
+
+      // Tentar com senha original
+      const originalHashTest1 = hashPassword(password, 'salt123');
+      const originalHashTest2 = hashPassword(password, 'salt456');
+
+      // Tentar com senha sanitizada
+      const cleanHashTest1 = hashPassword(cleanPassword, 'salt123');
+      const cleanHashTest2 = hashPassword(cleanPassword, 'salt456');
+
+      isValidPassword = user.passwordHash === originalHashTest1 ||
+                       user.passwordHash === originalHashTest2 ||
+                       user.passwordHash === cleanHashTest1 ||
+                       user.passwordHash === cleanHashTest2;
+    }
 
     Logger.log('Password check result:', isValidPassword);
 
