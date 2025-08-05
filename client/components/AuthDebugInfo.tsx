@@ -130,12 +130,22 @@ export function AuthDebugInfo() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => {
-                    testAuthSystem();
+                  onClick={async () => {
+                    // Quick test
+                    LocalAuthService.forceReinitializeUsers();
+                    console.log('🧪 Testing admin login...');
+                    const result = await LocalAuthService.signIn('admin@vendas.com', 'Admin123!');
+                    console.log('Result:', result);
+                    if (result.success) {
+                      alert('✅ Login funcionando!');
+                      LocalAuthService.signOut();
+                    } else {
+                      alert('❌ Login falhou: ' + result.error);
+                    }
                   }}
                   className="text-xs bg-blue-50 border-blue-300 text-blue-800 hover:bg-blue-100"
                 >
-                  🧪 Testar Sistema de Auth
+                  🧪 Teste Rápido Admin
                 </Button>
                 <Button
                   size="sm"
