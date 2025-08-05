@@ -168,32 +168,34 @@ class LocalAuthService {
       return { success: false, error: 'Email ou senha incorretos' };
     }
 
-    // Verificar senha (tentando diferentes abordagens para compatibilidade)
-    const hash1 = hashPassword(cleanPassword, 'salt123');
-    const hash2 = hashPassword(cleanPassword, 'salt456');
-    // También probar con la contraseña sin sanitizar
-    const originalHash1 = hashPassword(password, 'salt123');
-    const originalHash2 = hashPassword(password, 'salt456');
+    // Verificar senha - primeiro tentar com senha original, depois com sanitizada
+    Logger.log('Starting password verification for user:', user.email);
+    Logger.log('Original password:', password);
+    Logger.log('Sanitized password:', cleanPassword);
+    Logger.log('Stored hash:', user.passwordHash);
 
-    Logger.log('Password verification:', {
-      originalPassword: password,
-      cleanPassword,
+    // Determinar qual salt usar baseado no email
+    const salt = user.email === 'admin@vendas.com' ? 'salt123' : 'salt456';
+    Logger.log('Using salt:', salt);
+
+    // Testar com senha original primeiro
+    const originalHash = hashPassword(password, salt);
+    Logger.log('Original password hash:', originalHash);
+
+    // Testar com senha sanitizada
+    const cleanHash = hashPassword(cleanPassword, salt);
+    Logger.log('Clean password hash:', cleanHash);
+
+    const isValidPassword = user.passwordHash === originalHash || user.passwordHash === cleanHash;
+
+    Logger.log('Password verification result:', {
       storedHash: user.passwordHash,
-      calculatedHash1: hash1,
-      calculatedHash2: hash2,
-      originalHash1,
-      originalHash2,
-      match1: user.passwordHash === hash1,
-      match2: user.passwordHash === hash2,
-      originalMatch1: user.passwordHash === originalHash1,
-      originalMatch2: user.passwordHash === originalHash2
+      originalHash,
+      cleanHash,
+      originalMatch: user.passwordHash === originalHash,
+      cleanMatch: user.passwordHash === cleanHash,
+      finalResult: isValidPassword
     });
-
-    const isValidPassword =
-      user.passwordHash === hash1 ||
-      user.passwordHash === hash2 ||
-      user.passwordHash === originalHash1 ||
-      user.passwordHash === originalHash2;
 
     if (!isValidPassword) {
       Logger.error('Password verification failed', { cleanEmail });
