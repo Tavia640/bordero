@@ -287,25 +287,51 @@ export class SessionManager {
 
 // Email validation with security considerations
 export const validateEmail = (email: string): { isValid: boolean; error?: string } => {
-  if (!email) {
+  if (!email || email.trim() === '') {
     return { isValid: false, error: 'Email é obrigatório' };
   }
 
+  const trimmedEmail = email.trim().toLowerCase();
+
   // Basic email format validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
+  if (!emailRegex.test(trimmedEmail)) {
     return { isValid: false, error: 'Formato de email inválido' };
   }
 
   // Check for suspicious patterns
-  if (email.length > 254) {
+  if (trimmedEmail.length > 254) {
     return { isValid: false, error: 'Email muito longo' };
   }
 
   // Check for dangerous characters
   const dangerousChars = /[<>\"']/;
-  if (dangerousChars.test(email)) {
+  if (dangerousChars.test(trimmedEmail)) {
     return { isValid: false, error: 'Email contém caracteres inválidos' };
+  }
+
+  // Additional validations
+  if (trimmedEmail.includes('..')) {
+    return { isValid: false, error: 'Email contém pontos consecutivos' };
+  }
+
+  if (trimmedEmail.startsWith('.') || trimmedEmail.endsWith('.')) {
+    return { isValid: false, error: 'Email não pode começar ou terminar com ponto' };
+  }
+
+  const [localPart, domain] = trimmedEmail.split('@');
+
+  if (localPart.length > 64) {
+    return { isValid: false, error: 'Parte local do email muito longa' };
+  }
+
+  if (domain.length > 253) {
+    return { isValid: false, error: 'Domínio do email muito longo' };
+  }
+
+  // Check for valid domain structure
+  if (!domain.includes('.') || domain.startsWith('.') || domain.endsWith('.')) {
+    return { isValid: false, error: 'Domínio inválido' };
   }
 
   return { isValid: true };
