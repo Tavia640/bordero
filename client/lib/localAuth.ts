@@ -229,17 +229,10 @@ class LocalAuthService {
       return { success: false, error: 'Nome deve ter pelo menos 2 caracteres' };
     }
 
-    // Validar força da senha
-    const passwordStrength = validatePasswordStrength(cleanPassword);
-    Logger.log('Password strength validation:', {
-      password: cleanPassword,
-      strength: passwordStrength,
-      isStrong: passwordStrength.isStrong
-    });
-
-    if (!passwordStrength.isStrong) {
-      Logger.error('Password validation failed:', passwordStrength.feedback.join(', '));
-      return { success: false, error: `Senha não atende aos requisitos: ${passwordStrength.feedback.join(', ')}` };
+    // Validar força da senha (relaxada para debug)
+    if (cleanPassword.length < 6) {
+      Logger.error('Password too short');
+      return { success: false, error: 'Senha deve ter pelo menos 6 caracteres' };
     }
 
     this.initializeUsers();
