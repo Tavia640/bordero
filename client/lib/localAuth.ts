@@ -157,21 +157,23 @@ class LocalAuthService {
     } else if (user.email === 'vendedor@vendas.com' && password === 'Vendas2024!') {
       isValidPassword = true;
     } else {
-      // Para usuários criados dinamicamente, precisamos verificar o hash
-      // Como não temos o salt armazenado, vamos tentar diferentes abordagens
+      // Para usuários criados dinamicamente, usar salt baseado no email
+      const salt = 'salt_' + cleanEmail.replace(/[^a-zA-Z0-9]/g, '');
 
-      // Tentar com senha original
-      const originalHashTest1 = hashPassword(password, 'salt123');
-      const originalHashTest2 = hashPassword(password, 'salt456');
+      // Tentar com senha original e sanitizada
+      const originalHash = hashPassword(password, salt);
+      const cleanHash = hashPassword(cleanPassword, salt);
 
-      // Tentar com senha sanitizada
-      const cleanHashTest1 = hashPassword(cleanPassword, 'salt123');
-      const cleanHashTest2 = hashPassword(cleanPassword, 'salt456');
+      isValidPassword = user.passwordHash === originalHash || user.passwordHash === cleanHash;
 
-      isValidPassword = user.passwordHash === originalHashTest1 ||
-                       user.passwordHash === originalHashTest2 ||
-                       user.passwordHash === cleanHashTest1 ||
-                       user.passwordHash === cleanHashTest2;
+      Logger.log('Dynamic user verification:', {
+        email: cleanEmail,
+        salt: salt,
+        storedHash: user.passwordHash,
+        originalHash: originalHash,
+        cleanHash: cleanHash,
+        matches: isValidPassword
+      });
     }
 
     Logger.log('Password check result:', isValidPassword);
