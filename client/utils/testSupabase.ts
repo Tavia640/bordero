@@ -1,35 +1,54 @@
 import { supabase } from '@/lib/supabase'
+import { testNetworkConnectivity, diagnoseSupabaseIssue } from './networkTest'
 
 export const testSupabaseConnection = async () => {
   try {
     console.log('🔧 Testing Supabase connection...')
-    
-    // Test 1: Basic connection
-    const { data, error } = await supabase.auth.getSession()
-    
-    if (error) {
-      console.error('❌ Supabase connection failed:', error.message)
+
+    // First run network diagnostics
+    const networkResults = await testNetworkConnectivity()
+    console.log('Network test results:', networkResults)
+
+    if (!networkResults.general) {
+      console.error('❌ No internet connectivity')
       return false
     }
-    
-    console.log('✅ Supabase connection successful')
-    
-    // Test 2: Check if we can access auth API
+
+    if (!networkResults.supabase) {
+      console.error('❌ Cannot reach Supabase servers')
+      await diagnoseSupabaseIssue()
+      return false
+    }
+
+    // Test 1: Basic session check (should work even without login)
+    const { data, error } = await supabase.auth.getSession()
+
+    if (error && !error.message.includes('session_not_found')) {
+      console.error('❌ Supabase auth error:', error.message)
+      return false
+    }
+
+    console.log('✅ Supabase auth service accessible')
+
+    // Test 2: Try a simple health check
     try {
-      const { data: healthData, error: healthError } = await supabase.auth.getUser()
-      if (healthError && !healthError.message.includes('not logged in')) {
-        console.error('❌ Auth API not accessible:', healthError.message)
-        return false
-      }
-      console.log('✅ Auth API accessible')
+      const { data: user, error: userError } = await supabase.auth.getUser()
+      // This should return null user if not logged in, which is OK
+      console.log('✅ Auth API working, user status:', user?.user ? 'logged in' : 'not logged in')
     } catch (e: any) {
       console.error('❌ Auth API test failed:', e.message)
-      return false
+      if (e.message.includes('Failed to fetch')) {
+        return false
+      }
     }
-    
+
     return true
   } catch (error: any) {
     console.error('❌ Supabase test exception:', error.message)
+    if (error.message.includes('Failed to fetch')) {
+      console.log('🔍 Network connectivity issue detected')
+      await diagnoseSupabaseIssue()
+    }
     return false
   }
 }

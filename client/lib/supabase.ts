@@ -11,34 +11,13 @@ export const isSupabaseConfigured = () => {
          supabaseAnonKey.length > 20
 }
 
-// Create client with proper configuration for email confirmation
+// Create client with simplified configuration to avoid fetch issues
 export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    flowType: 'pkce',
-    debug: false
-  },
-  global: {
-    headers: {
-      'X-Client-Info': 'borderor-app',
-      'apikey': supabaseAnonKey
-    },
-    fetch: (url, options = {}) => {
-      return fetch(url, {
-        ...options,
-        headers: {
-          ...options.headers,
-          'Content-Type': 'application/json',
-        },
-      })
-    }
-  },
-  realtime: {
-    params: {
-      eventsPerSecond: 10
-    }
+    flowType: 'pkce'
   }
 })
 
