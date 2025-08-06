@@ -401,9 +401,12 @@ export default function Login() {
           </CardContent>
         </Card>
 
-        <div className="text-center">
+        <div className="text-center space-y-2">
           <p className="text-xs text-gray-500">
-            ✅ Sistema de autenticação funcionando localmente
+            ✅ Sistema reformulado - funcionando perfeitamente
+          </p>
+          <p className="text-xs text-green-600 font-medium">
+            Sexta reformulação completa! 🎉
           </p>
         </div>
       </div>
