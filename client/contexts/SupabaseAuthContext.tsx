@@ -168,6 +168,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setLoading(true)
       Logger.log('🔐 Attempting signin:', { email })
 
+      // Test environment first
+      const envOk = await testSupabaseEnvironment()
+      if (!envOk) {
+        return { error: 'Erro de conectividade. Verifique sua conexão e tente novamente.' }
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -175,7 +181,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (error) {
         Logger.error('Signin error:', error.message)
-        
+
+        // Handle network errors
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          return { error: 'Erro de conexão. Verifique sua internet e tente novamente.' }
+        }
+
         // Handle specific errors
         if (error.message.includes('Invalid login credentials')) {
           return { error: 'Email ou senha incorretos' }
@@ -186,7 +197,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (error.message.includes('Too many requests')) {
           return { error: 'Muitas tentativas. Tente novamente em alguns minutos.' }
         }
-        
+
         return { error: error.message }
       }
 
@@ -194,6 +205,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return { error: null }
     } catch (error: any) {
       Logger.error('Signin exception:', error)
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        return { error: 'Erro de conexão. Verifique sua internet e tente novamente.' }
+      }
       return { error: 'Erro interno. Tente novamente.' }
     } finally {
       setLoading(false)
