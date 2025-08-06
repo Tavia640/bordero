@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import SupabasePasswordRecovery from "@/components/SupabasePasswordRecovery";
+import { SupabaseTestPanel } from "@/components/SupabaseTestPanel";
 import { Mail, CheckCircle, AlertTriangle, Eye, EyeOff } from "lucide-react";
 
 export default function SupabaseLogin() {
@@ -399,6 +400,9 @@ export default function SupabaseLogin() {
             🚀 Sistema Supabase Ativo - Emails funcionais
           </p>
         </div>
+
+        {/* Painel de teste (apenas em desenvolvimento) */}
+        <SupabaseTestPanel />
       </div>
 
       {/* Modal de Recuperação de Senha */}
