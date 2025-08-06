@@ -14,6 +14,7 @@ import { DashboardMetrics, Sale, Installment } from "@shared/types";
 import { MobileLayout } from "@/components/MobileNavigation";
 import MonthlyTargetModal from "@/components/MonthlyTargetModal";
 import SystemStatus from "@/components/SystemStatus";
+import WelcomeMessage from "@/components/WelcomeMessage";
 import {
   TrendingUp,
   TrendingDown,
@@ -127,6 +128,8 @@ export default function Dashboard() {
         </div>
 
         <SystemStatus />
+
+        <WelcomeMessage />
 
         {/* Key Metrics - Mobile Grid */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
