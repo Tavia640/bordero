@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/SimpleAuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import LoginStatus from "@/components/LoginStatus";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -118,6 +119,8 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md mx-auto space-y-6">
+        <LoginStatus />
+
         <Card className="bg-white shadow-sm border border-gray-200 rounded-lg">
           <CardHeader className="text-center space-y-4 pb-6">
             <div className="flex justify-center">
