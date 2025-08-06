@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import LoginStatus from "@/components/LoginStatus";
 import PasswordRecoveryModal from "@/components/PasswordRecoveryModal";
+import PasswordRecoveryInfo from "@/components/PasswordRecoveryInfo";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -303,6 +304,8 @@ export default function Login() {
                     </div>
                   )}
                 </div>
+
+                <PasswordRecoveryInfo />
               </TabsContent>
 
               <TabsContent value="signup" className="space-y-4">
