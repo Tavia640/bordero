@@ -1,79 +1,65 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import LocalAuthService from "@/lib/localAuth";
-import Logger from "@/lib/logger";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
+import { testSupabaseConnection, testSupabaseConfig } from "@/utils/testSupabase";
 
 export default function AuthTest() {
-  const [testResults, setTestResults] = useState<string[]>([]);
+  const { signUp, resetPassword, user, session } = useAuth();
+  const [testResults, setTestResults] = useState({
+    connection: '',
+    signup: '',
+    recovery: '',
+    config: ''
+  });
 
-  const addResult = (message: string) => {
-    setTestResults(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+  const handleTestConfig = () => {
+    setTestResults(prev => ({ ...prev, config: '⏳ Testando configuração...' }));
+    const configOk = testSupabaseConfig();
+    setTestResults(prev => ({ 
+      ...prev, 
+      config: configOk ? '✅ Configuração válida' : '❌ Configuração inválida'
+    }));
   };
 
-  const runFullTest = async () => {
-    setTestResults([]);
-    addResult('🚀 Iniciando teste completo do sistema de autenticação...');
+  const handleTestConnection = async () => {
+    setTestResults(prev => ({ ...prev, connection: '⏳ Testando conexão...' }));
+    const connectionOk = await testSupabaseConnection();
+    setTestResults(prev => ({ 
+      ...prev, 
+      connection: connectionOk ? '✅ Conexão estabelecida' : '❌ Falha na conexão'
+    }));
+  };
 
-    // 1. Limpar tudo
-    addResult('🧹 Limpando dados existentes...');
-    localStorage.removeItem('local_auth_users');
-    localStorage.removeItem('current_user_session');
-    localStorage.removeItem('login_attempts');
+  const handleTestSignup = async () => {
+    setTestResults(prev => ({ ...prev, signup: '⏳ Testando cadastro...' }));
+    const result = await signUp('test@example.com', 'password123', 'Test User');
+    setTestResults(prev => ({ 
+      ...prev, 
+      signup: result.error 
+        ? `❌ Erro no cadastro: ${result.error}` 
+        : result.needsConfirmation 
+          ? '✅ Cadastro realizado - confirmação por email necessária'
+          : '✅ Cadastro realizado com sucesso'
+    }));
+  };
 
-    // 2. Inicializar usuários
-    addResult('👥 Inicializando usuários demo...');
-    LocalAuthService.initializeUsers();
+  const handleTestRecovery = async () => {
+    setTestResults(prev => ({ ...prev, recovery: '⏳ Testando recuperação...' }));
+    const result = await resetPassword('test@example.com');
+    setTestResults(prev => ({ 
+      ...prev, 
+      recovery: result.error ? `❌ Erro na recuperação: ${result.error}` : '✅ Email de recuperação enviado'
+    }));
+  };
 
-    // 3. Verificar usuários criados
-    const users = (LocalAuthService as any).getStoredUsers();
-    addResult(`📊 Usuários criados: ${users.length}`);
-    users.forEach((user: any) => {
-      addResult(`   - ${user.email} (hash: ${user.passwordHash.substring(0, 10)}...)`);
+  const clearResults = () => {
+    setTestResults({
+      connection: '',
+      signup: '',
+      recovery: '',
+      config: ''
     });
-
-    // 4. Testar login
-    const testCredentials = [
-      { email: 'admin@vendas.com', password: 'Admin123!' },
-      { email: 'vendedor@vendas.com', password: 'Vendas2024!' }
-    ];
-
-    for (const cred of testCredentials) {
-      addResult(`🔐 Testando login: ${cred.email}`);
-      
-      try {
-        const result = await LocalAuthService.signIn(cred.email, cred.password);
-        
-        if (result.success) {
-          addResult(`✅ SUCESSO: ${cred.email} logado com sucesso!`);
-          LocalAuthService.signOut();
-          addResult(`🚪 Logout realizado para ${cred.email}`);
-        } else {
-          addResult(`❌ FALHA: ${cred.email} - ${result.error}`);
-        }
-      } catch (error) {
-        addResult(`💥 ERRO: ${cred.email} - ${error}`);
-      }
-    }
-
-    addResult('🏁 Teste completo finalizado!');
-  };
-
-  const testSingleCredential = async (email: string, password: string) => {
-    addResult(`🧪 Teste individual: ${email}`);
-    
-    try {
-      const result = await LocalAuthService.signIn(email, password);
-      
-      if (result.success) {
-        addResult(`✅ Login bem-sucedido!`);
-        LocalAuthService.signOut();
-      } else {
-        addResult(`❌ Login falhou: ${result.error}`);
-      }
-    } catch (error) {
-      addResult(`💥 Erro durante login: ${error}`);
-    }
   };
 
   return (
@@ -82,55 +68,66 @@ export default function AuthTest() {
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl text-center">
-              🔧 Teste do Sistema de Autenticação
+              🔧 Teste do Sistema Supabase
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Button
-                onClick={runFullTest}
-                className="bg-blue-600 hover:bg-blue-700"
-                size="lg"
-              >
-                🚀 Executar Teste Completo
-              </Button>
-              
-              <Button
-                onClick={() => {
-                  LocalAuthService.forceReinitializeUsers();
-                  addResult('🔄 Usuários reinicializados');
-                }}
-                variant="outline"
-                size="lg"
-              >
-                🔄 Reinicializar Usuários
-              </Button>
+          <CardContent className="space-y-6">
+            {/* Connection Status */}
+            <div className="p-4 bg-blue-50 rounded-lg border">
+              <h3 className="font-semibold mb-2">Status da Sessão</h3>
+              <div className="text-sm space-y-1">
+                <div><strong>Usuário:</strong> {user ? user.email : 'Não logado'}</div>
+                <div><strong>Sessão:</strong> {session ? 'Ativa' : 'Inativa'}</div>
+                <div><strong>URL:</strong> {import.meta.env.VITE_SUPABASE_URL ? '✅ Configurada' : '❌ Não configurada'}</div>
+                <div><strong>Key:</strong> {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Configurada' : '❌ Não configurada'}</div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Button
-                onClick={() => testSingleCredential('admin@vendas.com', 'Admin123!')}
-                variant="outline"
+            {/* Test Buttons */}
+            <div className="space-y-4">
+              <Button 
+                onClick={handleTestConfig}
+                className="w-full"
+                variant="default"
               >
-                🧪 Testar Admin
+                Testar Configuração
               </Button>
               
-              <Button
-                onClick={() => testSingleCredential('vendedor@vendas.com', 'Vendas2024!')}
-                variant="outline"
+              <Button 
+                onClick={handleTestConnection}
+                className="w-full"
+                variant="default"
               >
-                🧪 Testar Vendedor
+                Testar Conexão Supabase
+              </Button>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button 
+                  onClick={handleTestSignup}
+                  className="w-full"
+                  variant="outline"
+                >
+                  Testar Cadastro
+                </Button>
+                
+                <Button 
+                  onClick={handleTestRecovery}
+                  className="w-full"
+                  variant="outline"
+                >
+                  Testar Recuperação
+                </Button>
+              </div>
+
+              <Button
+                onClick={clearResults}
+                variant="ghost"
+                size="sm"
+                className="w-full"
+              >
+                🧹 Limpar Resultados
               </Button>
             </div>
-
-            <Button
-              onClick={() => setTestResults([])}
-              variant="ghost"
-              size="sm"
-              className="w-full"
-            >
-              🧹 Limpar Resultados
-            </Button>
           </CardContent>
         </Card>
 
@@ -139,16 +136,19 @@ export default function AuthTest() {
             <CardTitle>📋 Resultados dos Testes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm max-h-96 overflow-y-auto">
-              {testResults.length === 0 ? (
-                <div className="text-gray-500">Nenhum teste executado ainda...</div>
-              ) : (
-                testResults.map((result, index) => (
-                  <div key={index} className="mb-1">
-                    {result}
-                  </div>
-                ))
-              )}
+            <div className="space-y-2 text-sm">
+              <div className="p-3 bg-purple-50 rounded-lg border">
+                <strong>Configuração:</strong> {testResults.config || 'Não testado'}
+              </div>
+              <div className="p-3 bg-blue-50 rounded-lg border">
+                <strong>Conexão:</strong> {testResults.connection || 'Não testado'}
+              </div>
+              <div className="p-3 bg-green-50 rounded-lg border">
+                <strong>Cadastro:</strong> {testResults.signup || 'Não testado'}
+              </div>
+              <div className="p-3 bg-orange-50 rounded-lg border">
+                <strong>Recuperação:</strong> {testResults.recovery || 'Não testado'}
+              </div>
             </div>
           </CardContent>
         </Card>
