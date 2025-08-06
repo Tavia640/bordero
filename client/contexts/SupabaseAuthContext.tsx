@@ -40,35 +40,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     Logger.log('��� Initializing Supabase Authentication')
 
-    // Test environment first
-    testSupabaseEnvironment().then(envOk => {
-      if (!envOk) {
-        Logger.error('❌ Supabase environment test failed')
-        setLoading(false)
-        return
-      }
+    // Always try to initialize, regardless of environment test
+    const initializeAuth = async () => {
+      try {
+        // Get initial session
+        const { data: { session }, error } = await supabase.auth.getSession()
 
-      // Get initial session
-      supabase.auth.getSession().then(({ data: { session }, error }) => {
         if (error && error.message.includes('Failed to fetch')) {
-          Logger.error('❌ Network connectivity issue:', error.message)
+          Logger.error('⚠️ Network connectivity issue during init, will retry on demand:', error.message)
           setLoading(false)
           return
         }
 
         if (error) {
-          Logger.error('Error getting session:', error.message)
+          Logger.error('Session error (non-network):', error.message)
         } else {
           Logger.log('Initial session:', session ? 'Found' : 'None')
           setSession(session)
           setUser(session?.user ?? null)
         }
-        setLoading(false)
-      }).catch(err => {
+      } catch (err: any) {
         Logger.error('Session check failed:', err.message)
+      } finally {
         setLoading(false)
-      })
-    })
+      }
+    }
+
+    initializeAuth()
 
     // Listen for auth changes
     const {
