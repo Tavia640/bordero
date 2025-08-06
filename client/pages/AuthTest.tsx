@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { testSupabaseConnection, testSupabaseConfig } from "@/utils/testSupabase";
 import { testBasicConnectivity, testSupabaseDirectly } from "@/utils/minimalNetworkTest";
+import { validateSupabaseConfig, diagnoseConnectionIssue } from "@/utils/supabaseValidator";
 import SupabaseDiagnostics from "@/components/SupabaseDiagnostics";
 
 export default function AuthTest() {
@@ -44,20 +45,55 @@ export default function AuthTest() {
 
   const handleTestConfig = () => {
     setTestResults(prev => ({ ...prev, config: '⏳ Testando configuração...' }));
-    const configOk = testSupabaseConfig();
-    setTestResults(prev => ({
-      ...prev,
-      config: configOk ? '✅ Configuração válida' : '❌ Configuração inválida'
-    }));
+
+    const validation = validateSupabaseConfig();
+
+    let message = '';
+    if (validation.valid) {
+      message = `✅ Configuração válida (Projeto: ${validation.config.projectId})`;
+    } else {
+      message = `❌ Problemas: ${validation.issues.join(', ')}`;
+    }
+
+    if (validation.warnings.length > 0) {
+      message += ` ⚠️ Avisos: ${validation.warnings.join(', ')}`;
+    }
+
+    setTestResults(prev => ({ ...prev, config: message }));
   };
 
   const handleTestConnection = async () => {
     setTestResults(prev => ({ ...prev, connection: '⏳ Testando conexão...' }));
-    const connectionOk = await testSupabaseConnection();
-    setTestResults(prev => ({ 
-      ...prev, 
-      connection: connectionOk ? '✅ Conexão estabelecida' : '❌ Falha na conexão'
-    }));
+
+    try {
+      const connectionOk = await testSupabaseConnection();
+
+      if (connectionOk) {
+        setTestResults(prev => ({
+          ...prev,
+          connection: '✅ Conexão estabelecida'
+        }));
+      } else {
+        // Run diagnosis to understand why it failed
+        const diagnosis = await diagnoseConnectionIssue();
+        let message = `❌ Falha na conexão (${diagnosis.type})`;
+
+        if (diagnosis.type === 'configuration') {
+          message += ` - Verifique variáveis de ambiente`;
+        } else if (diagnosis.type === 'network') {
+          message += ` - Problemas de rede/conectividade`;
+        } else if (diagnosis.type === 'environment') {
+          message += ` - Ambiente restrito`;
+        }
+
+        setTestResults(prev => ({ ...prev, connection: message }));
+      }
+    } catch (error: any) {
+      setTestResults(prev => ({
+        ...prev,
+        connection: `❌ Erro no teste: ${error.message}`
+      }));
+    }
   };
 
   const handleTestSignup = async () => {
