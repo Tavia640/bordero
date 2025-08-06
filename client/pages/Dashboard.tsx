@@ -118,13 +118,15 @@ export default function Dashboard() {
         {/* Welcome Header - Mobile Optimized */}
         <div className="text-center lg:text-left">
           <h2 className="text-xl font-bold text-gray-900">
-            Olá, {user?.user_metadata?.full_name?.split(" ")[0] || "Consultor"}!
+            Olá, {user?.name?.split(" ")[0] || "Consultor"}!
             👋
           </h2>
           <p className="text-sm text-gray-600 mt-1">
             Acompanhe suas vendas e recebimentos de multipropriedade
           </p>
         </div>
+
+        <SystemStatus />
 
         {/* Key Metrics - Mobile Grid */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
