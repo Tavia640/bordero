@@ -17,12 +17,27 @@ export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKe
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    // Email confirmation settings
     flowType: 'pkce',
+    debug: false
   },
   global: {
     headers: {
-      'X-Client-Info': 'borderor-app'
+      'X-Client-Info': 'borderor-app',
+      'apikey': supabaseAnonKey
+    },
+    fetch: (url, options = {}) => {
+      return fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          'Content-Type': 'application/json',
+        },
+      })
+    }
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10
     }
   }
 })
