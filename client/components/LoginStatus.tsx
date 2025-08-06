@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle, Zap, Shield } from 'lucide-react';
+import { CheckCircle, Zap, Shield, Key } from 'lucide-react';
 
 export default function LoginStatus() {
   return (
@@ -18,6 +18,10 @@ export default function LoginStatus() {
               <div className="flex items-center">
                 <Shield className="h-3 w-3 mr-1" />
                 Autenticação local robusta
+              </div>
+              <div className="flex items-center">
+                <Key className="h-3 w-3 mr-1" />
+                Recuperação de senha
               </div>
               <div className="flex items-center">
                 <Zap className="h-3 w-3 mr-1" />
