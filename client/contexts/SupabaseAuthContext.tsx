@@ -38,7 +38,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Logger.log('🚀 Initializing Supabase Authentication')
+    Logger.log('��� Initializing Supabase Authentication')
 
     // Test environment first
     testSupabaseEnvironment().then(envOk => {
@@ -100,12 +100,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setLoading(true)
       Logger.log('📝 Attempting signup:', { email, fullName })
 
-      // Test environment first
-      const envOk = await testSupabaseEnvironment()
-      if (!envOk) {
-        return { error: 'Erro de conectividade. Verifique sua conexão e tente novamente.' }
-      }
-
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -122,7 +116,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // Handle network errors
         if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          return { error: 'Erro de conexão. Verifique sua internet e tente novamente.' }
+          return { error: 'Erro de conexão. Este ambiente pode ter restrições de rede. Tente novamente.' }
         }
 
         // Handle specific errors
@@ -155,7 +149,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error: any) {
       Logger.error('Signup exception:', error)
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        return { error: 'Erro de conexão. Verifique sua internet e tente novamente.' }
+        return { error: 'Erro de conexão. Este ambiente pode ter restrições de rede.' }
       }
       return { error: 'Erro interno. Tente novamente.' }
     } finally {
@@ -168,12 +162,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setLoading(true)
       Logger.log('🔐 Attempting signin:', { email })
 
-      // Test environment first
-      const envOk = await testSupabaseEnvironment()
-      if (!envOk) {
-        return { error: 'Erro de conectividade. Verifique sua conexão e tente novamente.' }
-      }
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -184,7 +172,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // Handle network errors
         if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          return { error: 'Erro de conexão. Verifique sua internet e tente novamente.' }
+          return { error: 'Erro de conexão. Este ambiente pode ter restrições de rede.' }
         }
 
         // Handle specific errors
@@ -206,7 +194,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error: any) {
       Logger.error('Signin exception:', error)
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        return { error: 'Erro de conexão. Verifique sua internet e tente novamente.' }
+        return { error: 'Erro de conexão. Este ambiente pode ter restrições de rede.' }
       }
       return { error: 'Erro interno. Tente novamente.' }
     } finally {
@@ -240,12 +228,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       Logger.log('🔄 Sending password reset:', { email })
 
-      // Test environment first
-      const envOk = await testSupabaseEnvironment()
-      if (!envOk) {
-        return { error: 'Erro de conectividade. Verifique sua conexão e tente novamente.' }
-      }
-
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       })
@@ -255,7 +237,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // Handle network errors
         if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          return { error: 'Erro de conexão. Verifique sua internet e tente novamente.' }
+          return { error: 'Erro de conexão. Este ambiente pode ter restrições de rede.' }
         }
 
         return { error: error.message }
@@ -266,7 +248,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error: any) {
       Logger.error('Password reset exception:', error)
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        return { error: 'Erro de conexão. Verifique sua internet e tente novamente.' }
+        return { error: 'Erro de conexão. Este ambiente pode ter restrições de rede.' }
       }
       return { error: 'Erro ao enviar email de recuperação' }
     }
