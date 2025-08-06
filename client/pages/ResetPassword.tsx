@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,30 +22,26 @@ export default function ResetPassword() {
   
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { session } = useAuth();
 
   useEffect(() => {
     const checkSession = async () => {
-      if (!isSupabaseConfigured()) {
-        setError("Sistema de autenticação não configurado");
-        return;
-      }
-
       // Check if there's a valid session for password reset
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+
+      if (currentSession?.user) {
         setValidSession(true);
       } else {
         // Try to recover session from URL parameters
         const accessToken = searchParams.get('access_token');
         const refreshToken = searchParams.get('refresh_token');
-        
+
         if (accessToken && refreshToken) {
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
           });
-          
+
           if (!error) {
             setValidSession(true);
           } else {
@@ -97,26 +94,6 @@ export default function ResetPassword() {
     setLoading(false);
   };
 
-  if (!isSupabaseConfigured()) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="text-center pt-6">
-            <AlertTriangle className="h-16 w-16 text-red-600 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-red-800 mb-2">
-              Sistema não configurado
-            </h2>
-            <p className="text-sm text-gray-600 mb-4">
-              O sistema de autenticação não está configurado corretamente.
-            </p>
-            <Button onClick={() => navigate("/")} variant="outline">
-              Voltar ao Login
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   if (!validSession) {
     return (
