@@ -33,7 +33,7 @@ export default function PasswordRecoveryModal({
   const [error, setError] = useState("");
   const [generatedCode] = useState(() => Math.floor(100000 + Math.random() * 900000).toString());
 
-  const { resetPassword } = useAuth();
+  const { resetPassword, updatePassword } = useAuth();
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,19 +84,17 @@ export default function PasswordRecoveryModal({
     setLoading(true);
 
     try {
-      // Update password in localStorage
-      const registeredUsers = JSON.parse(localStorage.getItem('borderor_registered_users') || '[]');
-      const userIndex = registeredUsers.findIndex((u: any) => u.email.toLowerCase() === email.toLowerCase());
-      
-      if (userIndex !== -1) {
-        registeredUsers[userIndex].password = newPassword;
-        localStorage.setItem('borderor_registered_users', JSON.stringify(registeredUsers));
-      }
+      const result = await updatePassword(email, newPassword);
 
-      setTimeout(() => {
+      if (result.success) {
+        setTimeout(() => {
+          setLoading(false);
+          setStep("success");
+        }, 1000);
+      } else {
+        setError(result.error || "Erro ao redefinir senha");
         setLoading(false);
-        setStep("success");
-      }, 1000);
+      }
     } catch (error) {
       setError("Erro ao redefinir senha. Tente novamente.");
       setLoading(false);

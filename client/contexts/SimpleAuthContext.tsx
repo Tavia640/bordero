@@ -14,6 +14,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>
   signOut: () => void
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>
+  updatePassword: (email: string, newPassword: string) => Promise<{ success: boolean; error?: string; message?: string }>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -188,21 +189,52 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 500))
-      
-      // Check if email exists
+
+      // Check if email exists in demo users
       const demoUser = DEMO_USERS.find(u => u.email.toLowerCase() === email.toLowerCase())
+
+      // Check if email exists in registered users
       const registeredUsers = JSON.parse(localStorage.getItem('borderor_registered_users') || '[]')
       const registeredUser = registeredUsers.find((u: any) => u.email.toLowerCase() === email.toLowerCase())
-      
+
       if (demoUser || registeredUser) {
-        // In a real app, this would send an email
+        // In a real app, this would send an email with reset link
+        // For demo purposes, we just confirm the email exists
         return { success: true }
       }
-      
-      return { success: false, error: 'Email não encontrado' }
-      
+
+      return { success: false, error: 'Email não encontrado no sistema' }
+
     } catch (error) {
       return { success: false, error: 'Erro interno. Tente novamente.' }
+    }
+  }
+
+  const updatePassword = async (email: string, newPassword: string) => {
+    try {
+      // Update password for registered users
+      const registeredUsers = JSON.parse(localStorage.getItem('borderor_registered_users') || '[]')
+      const userIndex = registeredUsers.findIndex((u: any) => u.email.toLowerCase() === email.toLowerCase())
+
+      if (userIndex !== -1) {
+        registeredUsers[userIndex].password = newPassword
+        registeredUsers[userIndex].passwordUpdatedAt = new Date().toISOString()
+        localStorage.setItem('borderor_registered_users', JSON.stringify(registeredUsers))
+        return { success: true }
+      }
+
+      // For demo users, we can't actually update their passwords
+      // but we'll simulate success for UX
+      const demoUser = DEMO_USERS.find(u => u.email.toLowerCase() === email.toLowerCase())
+      if (demoUser) {
+        // In a real app, demo users would have their passwords updated in the backend
+        return { success: true, message: 'Senha do usuário demo foi "atualizada" (simulação)' }
+      }
+
+      return { success: false, error: 'Usuário não encontrado' }
+
+    } catch (error) {
+      return { success: false, error: 'Erro ao atualizar senha' }
     }
   }
 
@@ -212,7 +244,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signIn,
     signUp,
     signOut,
-    resetPassword
+    resetPassword,
+    updatePassword
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
