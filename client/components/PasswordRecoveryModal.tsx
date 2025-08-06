@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { X, Mail, Key, CheckCircle, AlertTriangle } from "lucide-react";
 import LocalAuthService from "@/lib/localAuth";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 interface PasswordRecoveryModalProps {
