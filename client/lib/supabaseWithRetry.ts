@@ -57,7 +57,7 @@ export const createSupabaseClientWithRetry = async (): Promise<SupabaseClient | 
       const { error } = await client.auth.getSession();
       
       if (!error || error.message.includes('session_not_found')) {
-        console.log(`�� Success with ${name} configuration`);
+        console.log(`✅ Success with ${name} configuration`);
         return client;
       } else {
         console.log(`❌ Failed with ${name} configuration:`, error.message);
@@ -71,37 +71,67 @@ export const createSupabaseClientWithRetry = async (): Promise<SupabaseClient | 
   return null;
 };
 
-// Test if the environment is accessible
+// Test if the environment is accessible with better error handling
 export const testSupabaseEnvironment = async () => {
   console.log('🔍 Testing Supabase environment...');
-  console.log('URL:', supabaseUrl);
-  console.log('Key length:', supabaseAnonKey?.length || 0);
-  
-  // Basic validation
-  if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
-    console.error('❌ Invalid or missing VITE_SUPABASE_URL');
+
+  // Import validation utility
+  const { validateSupabaseConfig, diagnoseConnectionIssue } = await import('@/utils/supabaseValidator');
+
+  // First check configuration
+  const validation = validateSupabaseConfig();
+  if (!validation.valid) {
+    console.error('❌ Configuration validation failed:', validation.issues);
     return false;
   }
-  
-  if (!supabaseAnonKey || supabaseAnonKey === 'placeholder-anon-key') {
-    console.error('❌ Invalid or missing VITE_SUPABASE_ANON_KEY');
-    return false;
-  }
-  
-  // Try to reach the endpoint directly
-  try {
-    console.log('Testing direct API access...');
-    const response = await fetch(`${supabaseUrl}/rest/v1/`, {
-      method: 'HEAD',
-      headers: {
-        'apikey': supabaseAnonKey
+
+  console.log('✅ Configuration validation passed');
+
+  // Try to reach the endpoint with multiple approaches
+  const testMethods = [
+    {
+      name: 'HEAD request',
+      test: () => fetch(`${supabaseUrl}/rest/v1/`, {
+        method: 'HEAD',
+        headers: { 'apikey': supabaseAnonKey }
+      })
+    },
+    {
+      name: 'OPTIONS request',
+      test: () => fetch(`${supabaseUrl}/rest/v1/`, {
+        method: 'OPTIONS'
+      })
+    },
+    {
+      name: 'No-CORS request',
+      test: () => fetch(`${supabaseUrl}/rest/v1/`, {
+        method: 'GET',
+        mode: 'no-cors'
+      })
+    }
+  ];
+
+  for (const method of testMethods) {
+    try {
+      console.log(`Testing ${method.name}...`);
+      const response = await method.test();
+      console.log(`${method.name} status:`, response.status);
+
+      if (response.status === 200 || response.status === 401 || response.type === 'opaque') {
+        console.log(`✅ ${method.name} succeeded`);
+        return true;
       }
-    });
-    
-    console.log('Direct API response status:', response.status);
-    return response.status === 200 || response.status === 401; // Both are OK for health check
-  } catch (error: any) {
-    console.error('❌ Direct API test failed:', error.message);
-    return false;
+    } catch (error: any) {
+      console.log(`❌ ${method.name} failed:`, error.message);
+
+      // If this is the last method, run diagnosis
+      if (method === testMethods[testMethods.length - 1]) {
+        const diagnosis = await diagnoseConnectionIssue();
+        console.log('🔍 Diagnosis:', diagnosis);
+      }
+    }
   }
+
+  console.error('❌ All connection methods failed');
+  return false;
 };
