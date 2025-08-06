@@ -13,6 +13,7 @@ import {
 import { DashboardMetrics, Sale, Installment } from "@shared/types";
 import { MobileLayout } from "@/components/MobileNavigation";
 import MonthlyTargetModal from "@/components/MonthlyTargetModal";
+import SystemStatus from "@/components/SystemStatus";
 import {
   TrendingUp,
   TrendingDown,
