@@ -178,8 +178,13 @@ export default function PasswordRecoveryModal({
                 {loading ? "Verificando..." : "Enviar Código"}
               </Button>
 
-              <div className="text-xs text-center text-gray-500 p-3 bg-blue-50 rounded-lg">
-                💡 Código de demonstração: <strong>{generatedCode}</strong>
+              <div className="text-xs text-center text-gray-500 space-y-2">
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  💡 Código de demonstração: <strong>{generatedCode}</strong>
+                </div>
+                <div className="p-3 bg-green-50 rounded-lg text-green-700">
+                  ✅ Funciona com usuários demo e cadastrados
+                </div>
               </div>
             </form>
           )}
@@ -306,10 +311,13 @@ export default function PasswordRecoveryModal({
               <CheckCircle className="h-16 w-16 text-green-600 mx-auto" />
               <div>
                 <h3 className="text-lg font-semibold text-green-800 mb-2">
-                  Senha Alterada!
+                  ✅ Senha Alterada!
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Sua senha foi alterada com sucesso.
+                  Sua senha foi alterada com sucesso para:
+                  <br />
+                  <span className="font-semibold text-green-600">{email}</span>
+                  <br />
                   <br />
                   Você já pode fazer login com a nova senha.
                 </p>
