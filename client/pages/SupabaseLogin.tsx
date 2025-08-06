@@ -127,6 +127,8 @@ export default function SupabaseLogin() {
           </CardHeader>
 
           <CardContent className="space-y-4">
+            <EnvironmentNotice />
+
             {successMessage && (
               <Alert className="border-green-200 bg-green-50">
                 <CheckCircle className="h-4 w-4 text-green-600" />
