@@ -3,22 +3,50 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { testSupabaseConnection, testSupabaseConfig } from "@/utils/testSupabase";
+import { testBasicConnectivity, testSupabaseDirectly } from "@/utils/minimalNetworkTest";
 import SupabaseDiagnostics from "@/components/SupabaseDiagnostics";
 
 export default function AuthTest() {
   const { signUp, resetPassword, user, session } = useAuth();
   const [testResults, setTestResults] = useState({
+    network: '',
     connection: '',
     signup: '',
     recovery: '',
     config: ''
   });
 
+  const handleTestNetworkBasic = async () => {
+    setTestResults(prev => ({ ...prev, network: '⏳ Testando conectividade básica...' }));
+
+    const basicResults = await testBasicConnectivity();
+    const supabaseReach = await testSupabaseDirectly();
+
+    let message = '';
+    if (basicResults.basicFetch) {
+      message += '✅ Internet: OK ';
+    } else {
+      message += '❌ Internet: FALHA ';
+    }
+
+    if (supabaseReach) {
+      message += '✅ Supabase: ALCANÇÁVEL';
+    } else {
+      message += '❌ Supabase: INACESSÍVEL';
+    }
+
+    if (basicResults.error) {
+      message += ` (${basicResults.error})`;
+    }
+
+    setTestResults(prev => ({ ...prev, network: message }));
+  };
+
   const handleTestConfig = () => {
     setTestResults(prev => ({ ...prev, config: '⏳ Testando configuração...' }));
     const configOk = testSupabaseConfig();
-    setTestResults(prev => ({ 
-      ...prev, 
+    setTestResults(prev => ({
+      ...prev,
       config: configOk ? '✅ Configuração válida' : '❌ Configuração inválida'
     }));
   };
@@ -56,6 +84,7 @@ export default function AuthTest() {
 
   const clearResults = () => {
     setTestResults({
+      network: '',
       connection: '',
       signup: '',
       recovery: '',
@@ -86,15 +115,23 @@ export default function AuthTest() {
 
             {/* Test Buttons */}
             <div className="space-y-4">
-              <Button 
+              <Button
+                onClick={handleTestNetworkBasic}
+                className="w-full"
+                variant="secondary"
+              >
+                🌐 Testar Rede Básica
+              </Button>
+
+              <Button
                 onClick={handleTestConfig}
                 className="w-full"
                 variant="default"
               >
                 Testar Configuração
               </Button>
-              
-              <Button 
+
+              <Button
                 onClick={handleTestConnection}
                 className="w-full"
                 variant="default"
@@ -138,6 +175,9 @@ export default function AuthTest() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2 text-sm">
+              <div className="p-3 bg-gray-50 rounded-lg border">
+                <strong>Rede Básica:</strong> {testResults.network || 'Não testado'}
+              </div>
               <div className="p-3 bg-purple-50 rounded-lg border">
                 <strong>Configuração:</strong> {testResults.config || 'Não testado'}
               </div>
