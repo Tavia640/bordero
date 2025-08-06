@@ -5,12 +5,14 @@ import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { testSupabaseConnection, testSupabaseConfig } from "@/utils/testSupabase";
 import { testBasicConnectivity, testSupabaseDirectly } from "@/utils/minimalNetworkTest";
 import { validateSupabaseConfig, diagnoseConnectionIssue } from "@/utils/supabaseValidator";
+import { compareClientServerConnectivity } from "@/utils/serverProxyTest";
 import SupabaseDiagnostics from "@/components/SupabaseDiagnostics";
 
 export default function AuthTest() {
   const { signUp, resetPassword, user, session } = useAuth();
   const [testResults, setTestResults] = useState({
     network: '',
+    serverTest: '',
     connection: '',
     signup: '',
     recovery: '',
@@ -41,6 +43,33 @@ export default function AuthTest() {
     }
 
     setTestResults(prev => ({ ...prev, network: message }));
+  };
+
+  const handleTestServerProxy = async () => {
+    setTestResults(prev => ({ ...prev, serverTest: '⏳ Testando via servidor...' }));
+
+    try {
+      const comparison = await compareClientServerConnectivity();
+
+      let message = '';
+      if (comparison.server && comparison.client) {
+        message = '✅ Cliente e servidor: OK';
+      } else if (comparison.server && !comparison.client) {
+        message = '⚠️ Servidor: OK, Cliente: FALHA (CORS/Rede)';
+      } else if (!comparison.server && comparison.client) {
+        message = '⚠️ Cliente: OK, Servidor: FALHA (Config)';
+      } else {
+        message = '❌ Cliente e servidor: FALHA';
+      }
+
+      message += ` (${comparison.diagnosis})`;
+      setTestResults(prev => ({ ...prev, serverTest: message }));
+    } catch (error: any) {
+      setTestResults(prev => ({
+        ...prev,
+        serverTest: `❌ Erro no teste: ${error.message}`
+      }));
+    }
   };
 
   const handleTestConfig = () => {
@@ -121,6 +150,7 @@ export default function AuthTest() {
   const clearResults = () => {
     setTestResults({
       network: '',
+      serverTest: '',
       connection: '',
       signup: '',
       recovery: '',
@@ -157,6 +187,14 @@ export default function AuthTest() {
                 variant="secondary"
               >
                 🌐 Testar Rede Básica
+              </Button>
+
+              <Button
+                onClick={handleTestServerProxy}
+                className="w-full"
+                variant="outline"
+              >
+                🔄 Testar Via Servidor
               </Button>
 
               <Button
@@ -213,6 +251,9 @@ export default function AuthTest() {
             <div className="space-y-2 text-sm">
               <div className="p-3 bg-gray-50 rounded-lg border">
                 <strong>Rede Básica:</strong> {testResults.network || 'Não testado'}
+              </div>
+              <div className="p-3 bg-yellow-50 rounded-lg border">
+                <strong>Via Servidor:</strong> {testResults.serverTest || 'Não testado'}
               </div>
               <div className="p-3 bg-purple-50 rounded-lg border">
                 <strong>Configuração:</strong> {testResults.config || 'Não testado'}
