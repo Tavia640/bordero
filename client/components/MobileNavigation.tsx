@@ -10,7 +10,7 @@ import {
   LogOut,
   ShoppingCart,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { Button } from "@/components/ui/button";
 
 export function MobileNavigation() {
