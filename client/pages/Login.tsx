@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/SimpleAuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import LoginStatus from "@/components/LoginStatus";
+import PasswordRecoveryModal from "@/components/PasswordRecoveryModal";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -35,6 +36,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showDemoUsers, setShowDemoUsers] = useState(false);
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
   
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -231,6 +233,17 @@ export default function Login() {
                   >
                     {loading ? "Entrando..." : "Entrar"}
                   </Button>
+
+                  <div className="text-center mt-4">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="text-sm text-green-600 hover:text-green-700 hover:underline p-0 h-auto"
+                      onClick={() => setShowRecoveryModal(true)}
+                    >
+                      Esqueceu sua senha?
+                    </Button>
+                  </div>
                 </form>
 
                 {/* Demo Users Section */}
@@ -410,6 +423,12 @@ export default function Login() {
           </p>
         </div>
       </div>
+
+      {/* Password Recovery Modal */}
+      <PasswordRecoveryModal
+        isOpen={showRecoveryModal}
+        onClose={() => setShowRecoveryModal(false)}
+      />
     </div>
   );
 }
