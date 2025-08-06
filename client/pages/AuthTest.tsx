@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { testSupabaseConnection, testSupabaseConfig } from "@/utils/testSupabase";
+import SupabaseDiagnostics from "@/components/SupabaseDiagnostics";
 
 export default function AuthTest() {
   const { signUp, resetPassword, user, session } = useAuth();
@@ -152,6 +153,8 @@ export default function AuthTest() {
             </div>
           </CardContent>
         </Card>
+
+        <SupabaseDiagnostics />
 
         <div className="text-center">
           <Button
