@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { testSupabaseEnvironment } from '@/lib/supabaseWithRetry'
 import Logger from '@/lib/logger'
 
 interface AuthContextType {
@@ -39,16 +40,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     Logger.log('🚀 Initializing Supabase Authentication')
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        Logger.error('Error getting session:', error.message)
-      } else {
-        Logger.log('Initial session:', session ? 'Found' : 'None')
-        setSession(session)
-        setUser(session?.user ?? null)
+    // Test environment first
+    testSupabaseEnvironment().then(envOk => {
+      if (!envOk) {
+        Logger.error('❌ Supabase environment test failed')
+        setLoading(false)
+        return
       }
-      setLoading(false)
+
+      // Get initial session
+      supabase.auth.getSession().then(({ data: { session }, error }) => {
+        if (error && error.message.includes('Failed to fetch')) {
+          Logger.error('❌ Network connectivity issue:', error.message)
+          setLoading(false)
+          return
+        }
+
+        if (error) {
+          Logger.error('Error getting session:', error.message)
+        } else {
+          Logger.log('Initial session:', session ? 'Found' : 'None')
+          setSession(session)
+          setUser(session?.user ?? null)
+        }
+        setLoading(false)
+      }).catch(err => {
+        Logger.error('Session check failed:', err.message)
+        setLoading(false)
+      })
     })
 
     // Listen for auth changes
@@ -81,6 +100,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setLoading(true)
       Logger.log('📝 Attempting signup:', { email, fullName })
 
+      // Test environment first
+      const envOk = await testSupabaseEnvironment()
+      if (!envOk) {
+        return { error: 'Erro de conectividade. Verifique sua conexão e tente novamente.' }
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -94,7 +119,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (error) {
         Logger.error('Signup error:', error.message)
-        
+
+        // Handle network errors
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          return { error: 'Erro de conexão. Verifique sua internet e tente novamente.' }
+        }
+
         // Handle specific errors
         if (error.message.includes('already registered')) {
           return { error: 'Este email já está cadastrado' }
@@ -105,7 +135,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (error.message.includes('Password')) {
           return { error: 'Senha deve ter pelo menos 6 caracteres' }
         }
-        
+
         return { error: error.message }
       }
 
@@ -124,6 +154,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return { error: null }
     } catch (error: any) {
       Logger.error('Signup exception:', error)
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        return { error: 'Erro de conexão. Verifique sua internet e tente novamente.' }
+      }
       return { error: 'Erro interno. Tente novamente.' }
     } finally {
       setLoading(false)
@@ -193,12 +226,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       Logger.log('🔄 Sending password reset:', { email })
 
+      // Test environment first
+      const envOk = await testSupabaseEnvironment()
+      if (!envOk) {
+        return { error: 'Erro de conectividade. Verifique sua conexão e tente novamente.' }
+      }
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       })
 
       if (error) {
         Logger.error('Password reset error:', error.message)
+
+        // Handle network errors
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          return { error: 'Erro de conexão. Verifique sua internet e tente novamente.' }
+        }
+
         return { error: error.message }
       }
 
@@ -206,6 +251,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return { error: null }
     } catch (error: any) {
       Logger.error('Password reset exception:', error)
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        return { error: 'Erro de conexão. Verifique sua internet e tente novamente.' }
+      }
       return { error: 'Erro ao enviar email de recuperação' }
     }
   }
