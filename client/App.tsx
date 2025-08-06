@@ -7,9 +7,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/SupabaseAuthContext";
+import { AuthProvider } from "./contexts/SimpleAuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import SupabaseLogin from "./pages/SupabaseLogin";
+import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Cadastro from "./pages/Cadastro";
 import Acompanhamento from "./pages/Acompanhamento";
@@ -35,7 +35,7 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<SupabaseLogin />} />
+            <Route path="/" element={<Login />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/auth-test" element={<AuthTest />} />
             <Route
